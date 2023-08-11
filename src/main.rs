@@ -1,5 +1,6 @@
 mod requests;
 mod components;
+mod entities;
 
 use anyhow::anyhow;
 use serenity::async_trait;
@@ -84,9 +85,9 @@ impl EventHandler for Bot {
             Interaction::MessageComponent(component) => {
                 info!("Received message component interaction: {}", component.data.custom_id);
                 match component.data.custom_id.as_str() {
-                    "Gear" => requests::gear(component, &ctx).await,
-                    "Consumables" => requests::consumables(component, &ctx).await,
-                    "Enchantment" => requests::enchantment(component, &ctx).await,
+                    "Gear" => requests::gear::gear(component, &ctx).await,
+                    "Consumables" => requests::consumable::consumables(component, &ctx).await,
+                    "Enchantment" => requests::enchantment::enchantment(component, &ctx).await,
                     _ => info!("interaction {} not registered", component.data.custom_id)
                 }
             }
@@ -96,9 +97,9 @@ impl EventHandler for Bot {
             Interaction::ModalSubmit(modal) => {
                 info!("Received modal submit interaction: {}", modal.data.custom_id);
                 match modal.data.custom_id.as_str() {
-                    "gear_set_modal" => requests::gear_modal(modal, &ctx).await,
-                    "enchantment_modal" => requests::enchantment_modal(modal, &ctx).await,
-                    "consumables_modal" => requests::consumables_modal(modal, &ctx).await,
+                    "gear_set_modal" => requests::gear::gear_modal(modal, &ctx).await,
+                    "enchantment_modal" => requests::enchantment::enchantment_modal(modal, &ctx).await,
+                    "consumables_modal" => requests::consumable::consumables_modal(modal, &ctx).await,
                     _ => unreachable!("interaction id not found")
                 }
             }

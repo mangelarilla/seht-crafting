@@ -1,3 +1,5 @@
+pub mod traits;
+
 use serenity::builder::{CreateActionRow, CreateEmbed, CreateInputText, CreateSelectMenu};
 use serenity::model::prelude::component::*;
 use serenity::model::prelude::*;
@@ -35,8 +37,8 @@ pub fn gear_set_parts(name: &str) -> CreateSelectMenu {
         .create_option(|o| o.label("Piernas").value("Piernas"))
         .create_option(|o| o.label("Pies").value("Pies"))
         .create_option(|o| o.label("Amuleto").value("Amuleto"))
-        .create_option(|o| o.label("Anillo (1)").value("Anillo (1)"))
-        .create_option(|o| o.label("Anillo (2)").value("Anillo (2)"))
+        .create_option(|o| o.label("Anillo #1").value("Anillo #1"))
+        .create_option(|o| o.label("Anillo #2").value("Anillo #2"))
         .create_option(|o| o.label("Escudo").value("Escudo"))
         .create_option(|o| o.label("Baston fuego").value("Baston fuego"))
         .create_option(|o| o.label("Baston electrico").value("Baston electrico"))
@@ -65,23 +67,7 @@ pub fn armor_weight(name: &str) -> CreateSelectMenu {
     b
 }
 
-pub fn gear_traits(name: &str) -> CreateSelectMenu {
-    let mut b = CreateSelectMenu::default();
-    b.custom_id(name);
-    b.placeholder("Selecciona el rasgo que quieres");
-    b.options(|opts| opts
-        .create_option(|o| o.label("Divines").value("Divines"))
-        .create_option(|o| o.label("Invigorating").value("Invigorating"))
-        .create_option(|o| o.label("Impenetrable").value("Impenetrable"))
-        .create_option(|o| o.label("Infused").value("Infused"))
-        .create_option(|o| o.label("Nirnhoned").value("Nirnhoned"))
-        .create_option(|o| o.label("Reinforced").value("Reinforced"))
-        .create_option(|o| o.label("Sturdy").value("Sturdy"))
-        .create_option(|o| o.label("Training").value("Training"))
-        .create_option(|o| o.label("Well-Fitted").value("Well-Fitted"))
-    );
-    b
-}
+
 
 pub fn gear_quality(name: &str) -> CreateSelectMenu {
     let mut b = CreateSelectMenu::default();
