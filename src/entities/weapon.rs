@@ -1,23 +1,29 @@
 use std::fmt::{Display, Formatter};
-use crate::entities::ItemInfo;
+use strum::EnumIter;
+use crate::entities::{ItemInfo};
 
+#[derive(Clone, EnumIter)]
 pub enum OneHandedWeapons {
     Mace, Dagger, Sword, Axe
 }
 
+#[derive(Clone, EnumIter)]
 pub enum TwoHandedWeapons {
     Mace, Sword, Axe, FrostStaff, FireStaff, LightningStaff, RestorationStaff, Bow
 }
 
+#[derive(Clone)]
 pub enum WeaponKind {
     OneHanded(OneHandedWeapons),
     TwoHanded(TwoHandedWeapons)
 }
 
+#[derive(Clone, EnumIter)]
 pub enum WeaponTraits {
     Charged, Defending, Powered, Infused, Nirnhoned, Precise, Sharpened, Training, Decisive
 }
 
+#[derive(Clone, EnumIter)]
 pub enum WeaponEnchantments {
     Fire, Frost, Shock, Poison, Foulness, DecreaseHealth, Hardening, AbsorbHealth, AbsorbMagicka,
     AbsorbStamina, WeaponDamage, Weakening, Crushing, PrismaticOnslaught
@@ -27,6 +33,43 @@ pub struct Weapon {
     pub kind: WeaponKind,
     pub weapon_trait: WeaponTraits,
     pub enchantment: WeaponEnchantments
+}
+
+impl Display for WeaponKind {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            WeaponKind::OneHanded(w) => write!(f, "{}", w),
+            WeaponKind::TwoHanded(w) => write!(f, "{}", w),
+        }
+    }
+}
+
+impl TryFrom<String> for WeaponKind {
+    type Error = String;
+
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        let one_handed = OneHandedWeapons::try_from(value.to_string())
+            .map(|w| Self::OneHanded(w));
+
+        if one_handed.is_ok() {
+            one_handed
+        } else {
+            TwoHandedWeapons::try_from(value)
+                .map(|w| Self::TwoHanded(w))
+        }
+    }
+}
+
+impl TryFrom<String> for OneHandedWeapons {
+    type Error = String;
+
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        if value == OneHandedWeapons::Mace.to_string() { Ok(OneHandedWeapons::Mace) }
+        else if value == OneHandedWeapons::Dagger.to_string() { Ok(OneHandedWeapons::Dagger) }
+        else if value == OneHandedWeapons::Sword.to_string() { Ok(OneHandedWeapons::Sword) }
+        else if value == OneHandedWeapons::Axe.to_string() { Ok(OneHandedWeapons::Axe) }
+        else { Err(format!("{} is not a weapon", value)) }
+    }
 }
 
 impl Display for OneHandedWeapons {
@@ -43,6 +86,21 @@ impl Display for OneHandedWeapons {
 impl ItemInfo for OneHandedWeapons {
     fn description(&self) -> String {
         "A una mano".to_string()
+    }
+}
+
+impl TryFrom<String> for TwoHandedWeapons {
+    type Error = String;
+
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        if value == TwoHandedWeapons::Mace.to_string() { Ok(TwoHandedWeapons::Mace) }
+        else if value == TwoHandedWeapons::Bow.to_string() { Ok(TwoHandedWeapons::Bow) }
+        else if value == TwoHandedWeapons::Sword.to_string() { Ok(TwoHandedWeapons::Sword) }
+        else if value == TwoHandedWeapons::FrostStaff.to_string() { Ok(TwoHandedWeapons::FrostStaff) }
+        else if value == TwoHandedWeapons::FireStaff.to_string() { Ok(TwoHandedWeapons::FireStaff) }
+        else if value == TwoHandedWeapons::LightningStaff.to_string() { Ok(TwoHandedWeapons::LightningStaff) }
+        else if value == TwoHandedWeapons::RestorationStaff.to_string() { Ok(TwoHandedWeapons::RestorationStaff) }
+        else { Err(format!("{} is not a weapon", value)) }
     }
 }
 
@@ -89,12 +147,12 @@ impl ItemInfo for WeaponTraits {
             WeaponTraits::Charged => "Aumenta la probabilidad de aplicar efectos de estado".to_string(),
             WeaponTraits::Defending => "Aumenta la resistencia física y a hechizos".to_string(),
             WeaponTraits::Powered => "Aumenta la curación realizada".to_string(),
-            WeaponTraits::Infused => "Aumenta el efecto de encantamiento de las armas y reduce el tiempo de reutilización del encantamiento".to_string(),
+            WeaponTraits::Infused => "Aumenta el encantamiento de las armas".to_string(),
             WeaponTraits::Nirnhoned => "Aumenta el daño del arma".to_string(),
             WeaponTraits::Precise => "Aumenta el crítico de arma y hechizo".to_string(),
             WeaponTraits::Sharpened => "Aumenta la penetración física y mágica".to_string(),
             WeaponTraits::Training => "Aumenta la experiencia ganada con cada muerte".to_string(),
-            WeaponTraits::Decisive => "Al ganar puntos de máxima, tendras posibilidad de ganar 1 punto extra".to_string(),
+            WeaponTraits::Decisive => "Aumenta la ganancia de puntos de máxima".to_string(),
         }
     }
 }
@@ -128,7 +186,7 @@ impl ItemInfo for WeaponEnchantments {
             WeaponEnchantments::Shock => "Inflige daño de descarga eléctica".to_string(),
             WeaponEnchantments::Poison => "Inflige daño de veneno".to_string(),
             WeaponEnchantments::Foulness => "Inflige daño de enfermedad".to_string(),
-            WeaponEnchantments::DecreaseHealth => "Inflige daño de Oblivion según una parte de la salud máxima del enemigo".to_string(),
+            WeaponEnchantments::DecreaseHealth => "Inflige daño de Oblivion usando la salud máxima del enemigo".to_string(),
             WeaponEnchantments::Hardening => "Otorga un escudo de daño que protege del daño".to_string(),
             WeaponEnchantments::AbsorbHealth => "Inglige daño de magia y restablece salud".to_string(),
             WeaponEnchantments::AbsorbMagicka => "Inflige daño de magia y recuperas magia".to_string(),

@@ -7,6 +7,9 @@ use serenity::prelude::*;
 use tracing::info;
 use crate::components;
 use crate::components::SetPiece;
+use crate::entities::armour::ArmourParts;
+use crate::entities::Gear;
+use crate::entities::weapon::WeaponKind;
 use crate::requests::{await_component_interaction, ok_response};
 
 pub async fn gear(interaction: MessageComponentInteraction, ctx: &Context) {
@@ -58,15 +61,17 @@ async fn select_gear_set_options(set: &str, user: &User, ctx: &Context) -> Vec<S
     for part in parse_one_handed(selected_parts, user, ctx).await
     {
         let selected_trait = select_trait(&part, user, ctx).await;
+        let selected_enchantment = select_enchantment(&part, user, ctx).await;
         let quality = select_quality(&part, user, ctx).await;
 
-        if components::is_armor(&part) {
-            let weight = select_weight(&part, user, ctx).await;
+        if let Gear::Armour(armour_part) = part {
+            let weight = select_weight(&armour_part, user, ctx).await;
 
             set_parts.push(SetPiece {
-                part: part.to_string(),
+                part: armour_part.to_string(),
                 part_trait: selected_trait,
                 weight: Some(weight),
+                enchantment: selected_enchantment,
                 quality
             });
         } else {
@@ -74,6 +79,7 @@ async fn select_gear_set_options(set: &str, user: &User, ctx: &Context) -> Vec<S
                 part: part.to_string(),
                 part_trait: selected_trait,
                 weight: None,
+                enchantment: selected_enchantment,
                 quality
             });
         }
@@ -86,36 +92,32 @@ async fn select_gear_set_options(set: &str, user: &User, ctx: &Context) -> Vec<S
     set_parts
 }
 
-async fn parse_one_handed(parts: Vec<String>, user: &User, ctx: &Context) -> Vec<String> {
-    let mut all_parts: Vec<String> = Vec::new();
-    for part in parts {
-        if components::is_one_handed(&part) {
-            let dual = user.dm(&ctx.http, |msg| msg
-                .content(format!("Has pedido una __**{}**__ de una mano. Quieres otra para ir con armas duales?", part))
-                .components(|c| c.create_action_row(|row| row
-                    .create_button(|b| b.custom_id("dual_yes").emoji(ReactionType::Unicode("👍".to_string())).label("Si").style(ButtonStyle::Success))
-                    .create_button(|b| b.custom_id("dual_no").emoji(ReactionType::Unicode("👎".to_string())).label("No").style(ButtonStyle::Danger))
-                ))
-            ).await.unwrap();
-            let dual_interaction = await_component_interaction(dual, ctx).await.unwrap();
-            if dual_interaction.data.custom_id == "dual_yes" {
-                all_parts.push(format!("{} (1)", part));
-                all_parts.push(format!("{} (2)", part));
-            } else {
-                all_parts.push(part.to_string());
-            }
-            dual_interaction.create_interaction_response(&ctx.http, |response| response
-                .kind(InteractionResponseType::DeferredUpdateMessage))
-                .await.unwrap();
-        } else {
-            all_parts.push(part.to_string());
+async fn parse_one_handed(parts: Vec<Gear>, user: &User, ctx: &Context) -> Vec<Gear> {
+    let mut all_parts: Vec<Gear> = parts.clone();
+
+    for weapon in parts.into_iter()
+        .filter_map(|g| if let Gear::Weapon(w) = g {Some(w)} else { None })
+        .filter_map(|w| if let WeaponKind::OneHanded(w) = w {Some(w)} else {None})
+    {
+        let dual = user.dm(&ctx.http, |msg| msg
+            .content(format!("Has pedido una __**{}**__ de una mano. Quieres otra para ir con armas duales?", weapon))
+            .components(|c| c.create_action_row(|row| row
+                .create_button(|b| b.custom_id("dual_yes").emoji(ReactionType::Unicode("👍".to_string())).label("Si").style(ButtonStyle::Success))
+                .create_button(|b| b.custom_id("dual_no").emoji(ReactionType::Unicode("👎".to_string())).label("No").style(ButtonStyle::Danger))
+            ))
+        ).await.unwrap();
+
+        let dual_interaction = await_component_interaction(dual, ctx).await.unwrap();
+        if dual_interaction.data.custom_id == "dual_yes" {
+            all_parts.push(Gear::Weapon(WeaponKind::OneHanded(weapon.clone())));
         }
+        ok_response(&dual_interaction, ctx).await;
     }
 
     all_parts
 }
 
-async fn select_parts(set: &str, user: &User, ctx: &Context) -> Vec<String> {
+async fn select_parts(set: &str, user: &User, ctx: &Context) -> Vec<Gear> {
     let msg = user.dm(&ctx.http, |msg| msg
         .set_embed(components::gear_set_embed(set))
         .components(|c| c
@@ -130,11 +132,27 @@ async fn select_parts(set: &str, user: &User, ctx: &Context) -> Vec<String> {
 
     interaction.data.values
         .iter()
-        .map(|f| f.to_string())
+        .filter_map(|f| Gear::try_from(f.to_string()).ok())
         .collect()
 }
 
-async fn select_trait(part: &str, user: &User, ctx: &Context) -> String {
+async fn select_enchantment(part: &Gear, user: &User, ctx: &Context) -> String {
+    let msg = user.dm(&ctx.http, |msg| msg
+        .content(format!("Selecciona **encantamiento** para __**{}**__", part))
+        .components(|c| c
+            .create_action_row(|row| row
+                .add_select_menu(components::enchantments::get_enchantments(part, "enchantment"))
+            )
+        )
+    ).await.unwrap();
+
+    let enchantment_interaction = await_component_interaction(msg, ctx).await.unwrap();
+    ok_response(&enchantment_interaction, ctx).await;
+
+    enchantment_interaction.data.values.get(0).unwrap().to_string()
+}
+
+async fn select_trait(part: &Gear, user: &User, ctx: &Context) -> String {
     let msg = user.dm(&ctx.http, |msg| msg
         .content(format!("Selecciona **rasgo** para __**{}**__", part))
         .components(|c| c
@@ -150,7 +168,7 @@ async fn select_trait(part: &str, user: &User, ctx: &Context) -> String {
     trait_interaction.data.values.get(0).unwrap().to_string()
 }
 
-async fn select_quality(part: &str, user: &User, ctx: &Context) -> String {
+async fn select_quality(part: &Gear, user: &User, ctx: &Context) -> String {
     let msg = user.dm(&ctx.http, |msg| msg
         .content(format!("Selecciona **calidad** para __**{}**__", part))
         .components(|c| {
@@ -166,7 +184,7 @@ async fn select_quality(part: &str, user: &User, ctx: &Context) -> String {
     quality_interaction.data.values.get(0).unwrap().to_string()
 }
 
-async fn select_weight(part: &str, user: &User, ctx: &Context) -> String {
+async fn select_weight(part: &ArmourParts, user: &User, ctx: &Context) -> String {
     let msg = user.dm(&ctx.http, |msg| msg
         .content(format!("Selecciona **peso** de la pieza: __**{}**__", part))
         .components(|c| {

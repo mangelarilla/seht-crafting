@@ -1,18 +1,23 @@
-use std::fmt::{Display, Formatter, write};
+use std::fmt::{Display, Formatter};
+use strum::EnumIter;
 use crate::entities::ItemInfo;
 
+#[derive(Clone, EnumIter)]
 pub enum ArmourParts {
     Head, Shoulder, Body, Hands, Waist, Legs, Feet, Shield
 }
 
+#[derive(EnumIter)]
 pub enum ArmourWeights {
     Light, Medium, Heavy
 }
 
+#[derive(EnumIter)]
 pub enum ArmourTraits {
     Divines, Invigorating, Impenetrable, Infused, Nirnhoned, Reinforced, Sturdy, Training, WellFitted
 }
 
+#[derive(EnumIter)]
 pub enum ArmourEnchantments {
     Health, Magicka, Stamina, PrismaticDefense
 }
@@ -22,6 +27,22 @@ pub struct Armour {
     pub weight: ArmourWeights,
     pub armour_trait: ArmourTraits,
     pub enchantment: ArmourEnchantments
+}
+
+impl TryFrom<String> for ArmourParts {
+    type Error = String;
+
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        if value == ArmourParts::Head.to_string() { Ok(ArmourParts::Head) }
+        else if value == ArmourParts::Shoulder.to_string() { Ok(ArmourParts::Shoulder) }
+        else if value == ArmourParts::Body.to_string() { Ok(ArmourParts::Body) }
+        else if value == ArmourParts::Hands.to_string() { Ok(ArmourParts::Hands) }
+        else if value == ArmourParts::Waist.to_string() { Ok(ArmourParts::Waist) }
+        else if value == ArmourParts::Legs.to_string() { Ok(ArmourParts::Legs) }
+        else if value == ArmourParts::Feet.to_string() { Ok(ArmourParts::Feet) }
+        else if value == ArmourParts::Shield.to_string() { Ok(ArmourParts::Shield) }
+        else { Err(format!("{} is not an armour part", value)) }
+    }
 }
 
 impl Display for ArmourParts {
@@ -70,7 +91,7 @@ impl ItemInfo for ArmourTraits {
         match *self {
             ArmourTraits::Divines => "Aumenta los efectos de las piedras de Mundus".to_string(),
             ArmourTraits::Invigorating => "Aumenta la recuperación de salud, magia y aguante".to_string(),
-            ArmourTraits::Impenetrable => "Aumenta la resistencia a críticos y el objeto recibe un 50% menos de reducción de durabilidad".to_string(),
+            ArmourTraits::Impenetrable => "Aumenta la resistencia a críticos y la durabilidad".to_string(),
             ArmourTraits::Infused => "Aumenta el efecto del encantamiento de la armadura".to_string(),
             ArmourTraits::Nirnhoned => "Aumenta la resistencia física y a hechizos".to_string(),
             ArmourTraits::Reinforced => "Aumenta el valor de armadura de este objeto".to_string(),

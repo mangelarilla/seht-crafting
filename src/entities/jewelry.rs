@@ -1,14 +1,18 @@
 use std::fmt::{Display, Formatter};
+use strum::EnumIter;
 use crate::entities::ItemInfo;
 
+#[derive(Clone, EnumIter)]
 pub enum Jewelries {
     Necklace, Ring
 }
 
+#[derive(EnumIter)]
 pub enum JewelryTraits {
     Arcane, Bloodthirsty, Harmony, Healthy, Infused, Protective, Robust, Swift, Triune
 }
 
+#[derive(EnumIter)]
 pub enum JewelryEnchantments {
     IncreasePhysicalHarm, IncreaseMagicalHarm, HealthRecovery, MagickaRecovery, StaminaRecovery,
     ReduceSpellCost, ReduceFeatCost, Shielding, Bashing, DecreasePhysicalHarm, DecreaseSpellHarm,
@@ -20,6 +24,16 @@ pub struct Jewelry {
     pub kind: Jewelries,
     pub jewelry_trait: JewelryTraits,
     pub enchantment: JewelryEnchantments
+}
+
+impl TryFrom<String> for Jewelries {
+    type Error = String;
+
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        if value == Jewelries::Necklace.to_string() { Ok(Jewelries::Necklace) }
+        else if value == Jewelries::Ring.to_string() { Ok(Jewelries::Ring) }
+        else { Err(format!("{} is not a jewelry", value)) }
+    }
 }
 
 impl Display for Jewelries {
@@ -51,7 +65,7 @@ impl ItemInfo for JewelryTraits {
     fn description(&self) -> String {
         match *self {
             JewelryTraits::Arcane => "Aumenta la magia máxima".to_string(),
-            JewelryTraits::Bloodthirsty => "Aumenta el daño de arma y hechizo en enemigos por debajo del 90% de salud".to_string(),
+            JewelryTraits::Bloodthirsty => "Aumenta el daño en enemigos por debajo del 90%".to_string(),
             JewelryTraits::Harmony => "Al activar una sinergia, restaura salud, magia y aguante".to_string(),
             JewelryTraits::Healthy => "Aumenta la salud máxima".to_string(),
             JewelryTraits::Infused => "Aumenta la eficacia del encantamiento de la joyería".to_string(),
@@ -110,7 +124,7 @@ impl ItemInfo for JewelryEnchantments {
             JewelryEnchantments::PoisonResist => "Añade resistencia a venenos".to_string(),
             JewelryEnchantments::DiseaseResist => "Añade resistencia a enfermedades".to_string(),
             JewelryEnchantments::PotionResist => "Aumenta la duración de los efectos de las pociones".to_string(),
-            JewelryEnchantments::PotionBoost => "Reduce la reutilización de las pociones con nivel inferior a este objeto".to_string(),
+            JewelryEnchantments::PotionBoost => "Reduce la reutilización de las pociones".to_string(),
             JewelryEnchantments::ReduceSkillCost => "Reduce el coste de salud, magia y aguante de las habilidades".to_string(),
             JewelryEnchantments::PrismaticRecovery => "Añade recuperación de magia, salud y aguante".to_string(),
         }

@@ -1,26 +1,22 @@
 pub mod traits;
+pub mod enchantments;
 
 use serenity::builder::{CreateActionRow, CreateEmbed, CreateInputText, CreateSelectMenu};
 use serenity::model::prelude::component::*;
 use serenity::model::prelude::*;
-
-const ARMOR_PARTS: [&str; 7] = ["Cabeza", "Hombros", "Pecho", "Manos", "Cintura", "Piernas", "Pies"];
-const ONE_HANDED: [&str; 4] = ["Maza", "Daga", "Hachuela", "Espada"];
+use strum::IntoEnumIterator;
+use crate::entities::armour::{ArmourParts, ArmourWeights};
+use crate::entities::{GearQuality, ItemEmoji, ItemInfo};
+use crate::entities::jewelry::Jewelries;
+use crate::entities::weapon::{OneHandedWeapons, TwoHandedWeapons};
 
 #[derive(Debug)]
 pub struct SetPiece {
     pub part: String,
     pub part_trait: String,
     pub weight: Option<String>,
-    pub quality: String
-}
-
-pub fn is_armor(name: &str) -> bool {
-    ARMOR_PARTS.contains(&name)
-}
-
-pub fn is_one_handed(name: &str) -> bool {
-    ONE_HANDED.contains(&name)
+    pub quality: String,
+    pub enchantment: String
 }
 
 pub fn gear_set_parts(name: &str) -> CreateSelectMenu {
@@ -28,30 +24,31 @@ pub fn gear_set_parts(name: &str) -> CreateSelectMenu {
     b.custom_id(name);
     b.placeholder("Selecciona las partes del set que quieres");
     b.max_values(12);
-    b.options(|opts| opts
-        .create_option(|o| o.label("Cabeza").value("Cabeza"))
-        .create_option(|o| o.label("Hombros").value("Hombros"))
-        .create_option(|o| o.label("Pecho").value("Pecho"))
-        .create_option(|o| o.label("Manos").value("Manos"))
-        .create_option(|o| o.label("Cintura").value("Cintura"))
-        .create_option(|o| o.label("Piernas").value("Piernas"))
-        .create_option(|o| o.label("Pies").value("Pies"))
-        .create_option(|o| o.label("Amuleto").value("Amuleto"))
-        .create_option(|o| o.label("Anillo #1").value("Anillo #1"))
-        .create_option(|o| o.label("Anillo #2").value("Anillo #2"))
-        .create_option(|o| o.label("Escudo").value("Escudo"))
-        .create_option(|o| o.label("Baston fuego").value("Baston fuego"))
-        .create_option(|o| o.label("Baston electrico").value("Baston electrico"))
-        .create_option(|o| o.label("Baston hielo").value("Baston hielo"))
-        .create_option(|o| o.label("Arco").value("Arco"))
-        .create_option(|o| o.label("Mandoble").value("Mandoble").description("Dos manos"))
-        .create_option(|o| o.label("Hacha").value("Hacha").description("Dos manos"))
-        .create_option(|o| o.label("Mazo").value("Mazo").description("Dos manos"))
-        .create_option(|o| o.label("Maza").value("Maza").description("Una mano"))
-        .create_option(|o| o.label("Daga").value("Daga").description("Una mano"))
-        .create_option(|o| o.label("Espada").value("Espada").description("Una mano"))
-        .create_option(|o| o.label("Hachuela").value("Hachuela").description("Una mano"))
-    );
+    b.options(|opts| {
+        for armour_part in ArmourParts::iter() {
+            opts.create_option(|o| o
+                .label(armour_part.to_string())
+                .value(armour_part.to_string()));
+        }
+        for jewelry in Jewelries::iter() {
+            opts.create_option(|o| o
+                .label(jewelry.to_string())
+                .value(jewelry.to_string()));
+        }
+        for weapon in TwoHandedWeapons::iter() {
+            opts.create_option(|o| o
+                .label(weapon.to_string())
+                .value(weapon.to_string())
+                .description(weapon.description()));
+        }
+        for weapon in OneHandedWeapons::iter() {
+            opts.create_option(|o| o
+                .label(weapon.to_string())
+                .value(weapon.to_string())
+                .description(weapon.description()));
+        }
+        opts
+    });
     b
 }
 
@@ -59,26 +56,30 @@ pub fn armor_weight(name: &str) -> CreateSelectMenu {
     let mut b = CreateSelectMenu::default();
     b.custom_id(name);
     b.placeholder("Selecciona el peso de la armadura");
-    b.options(|opts| opts
-        .create_option(|o| o.label("Pesada").value("Pesada"))
-        .create_option(|o| o.label("Media").value("Media"))
-        .create_option(|o| o.label("Ligera").value("Ligera"))
-    );
+    b.options(|opts| {
+        for weight in ArmourWeights::iter() {
+            opts.create_option(|o| o
+                .label(weight.to_string())
+                .value(weight.to_string()));
+        }
+        opts
+    });
     b
 }
-
-
 
 pub fn gear_quality(name: &str) -> CreateSelectMenu {
     let mut b = CreateSelectMenu::default();
     b.custom_id(name);
     b.placeholder("Selecciona la calidad de la pieza");
-    b.options(|opts| opts
-        .create_option(|o| o.label("Verde").value("Verde").emoji(ReactionType::Unicode("🟢".to_string())))
-        .create_option(|o| o.label("Azul").value("Azul").emoji(ReactionType::Unicode("🔵".to_string())))
-        .create_option(|o| o.label("Morada").value("Morada").emoji(ReactionType::Unicode("🟣".to_string())))
-        .create_option(|o| o.label("Amarilla").value("Amarilla").emoji(ReactionType::Unicode("🟡".to_string())))
-    );
+    b.options(|opts| {
+        for quality in GearQuality::iter() {
+            opts.create_option(|o| o
+                .label(quality.to_string())
+                .value(quality.to_string())
+                .emoji(quality.emoji()));
+        }
+        opts
+    });
     b
 }
 
@@ -98,6 +99,7 @@ pub fn gear_set_piece_embed(set: &str, part: &SetPiece) -> CreateEmbed {
         b.field(":lifter: Peso", weight, true);
     }
     b.field(":gem: Calidad", &part.quality, true);
+    b.field(":magic_wand: Encantamiento", &part.enchantment, false);
     b
 }
 
@@ -109,6 +111,7 @@ pub fn gear_piece_embed(part: &SetPiece) -> CreateEmbed {
         b.field("Peso", weight, true);
     }
     b.field("Calidad", &part.quality, true);
+    b.field("Encantamiento", &part.enchantment, true);
     b
 }
 
