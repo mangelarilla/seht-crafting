@@ -1560,9 +1560,9 @@ dependencies = [
 
 [[package]]
 name = "shuttle-codegen"
-version = "0.21.0"
+version = "0.23.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6f707f39740ae102e85f9a7b32bfe71f7702d9b4050781a523a58a762c11a960"
+checksum = "0e44dab12fe6c4ca6f7f5808c5c6bf52c1a5c07dfc54de61b0336c616c7f6a2d"
 dependencies = [
  "proc-macro-error",
  "proc-macro2",
@@ -1572,9 +1572,9 @@ dependencies = [
 
 [[package]]
 name = "shuttle-common"
-version = "0.21.0"
+version = "0.23.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b29e408d7654c735ede8554fdda69c516c8f04af43297e5cf50b831d8a0d7dce"
+checksum = "3e91c5d6f358588f97cb5d3869ceaad975eaa88ca1f963e684e72cc9a264bb62"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -1610,15 +1610,16 @@ dependencies = [
 
 [[package]]
 name = "shuttle-proto"
-version = "0.21.0"
+version = "0.23.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "36c4b30c2a22c2c0ea63ac2ac54a0898723b8288b4d0029ca0f765d47eff1833"
+checksum = "a4b8ab4e4e8b8a7f299ea6949c60518479ae6a8eeb140545c6b4a0640b6e3668"
 dependencies = [
  "anyhow",
  "chrono",
  "home",
  "prost",
  "prost-types",
+ "serde_json",
  "shuttle-common",
  "tokio",
  "tonic",
@@ -1628,9 +1629,9 @@ dependencies = [
 
 [[package]]
 name = "shuttle-runtime"
-version = "0.21.0"
+version = "0.23.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "57639b189b18d3f7e53f9aeaface40daba7fde07fcc8938cc78a3146ce4900a0"
+checksum = "d509359154b305070156c827af30006b4de604f240f63bbe1b0f4fa0d5096437"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -1654,9 +1655,9 @@ dependencies = [
 
 [[package]]
 name = "shuttle-secrets"
-version = "0.21.0"
+version = "0.23.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b6c777ea86566812a0de4d54eee1e50f8592dd7a59a79de4006d09c40a63aa72"
+checksum = "d9444a9e71281fefc3712d269e0d863931cac6c52fb015d4164a13c56ca84c9d"
 dependencies = [
  "async-trait",
  "serde",
@@ -1665,9 +1666,9 @@ dependencies = [
 
 [[package]]
 name = "shuttle-serenity"
-version = "0.21.0"
+version = "0.23.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "31ca3b982c133d5a9f0dd66b523cf09888b79382b43c57f7eefd6d382c8b6269"
+checksum = "4032aed7a19aff5a53b73c80f0fecc19b347505bf209ab9ab96d06abdbb7d93b"
 dependencies = [
  "serenity",
  "shuttle-runtime",
@@ -1675,9 +1676,9 @@ dependencies = [
 
 [[package]]
 name = "shuttle-service"
-version = "0.21.0"
+version = "0.23.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "eb9157726451489c43ac5d07d0813f3b39863cbcc778615a2f5daa9766a2bb15"
+checksum = "a0365223a805fa37f43edf34dd6ed759d8381805cfcfd10a154405fd00711c48"
 dependencies = [
  "anyhow",
  "async-trait",
