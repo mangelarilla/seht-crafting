@@ -26,7 +26,7 @@ impl EventHandler for Bot {
                 .description("Menu de solicitudes de crafteo")
                 .create_option(|option| option
                     .name("precio")
-                    .description("Precio de la solicitud")
+                    .description("Precio por pieza de la solicitud")
                     .kind(CommandOptionType::Number)
                     .required(true))
                 .create_option(|option| option

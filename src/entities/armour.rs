@@ -2,22 +2,22 @@ use std::fmt::{Display, Formatter};
 use strum::EnumIter;
 use crate::entities::ItemInfo;
 
-#[derive(Clone, EnumIter)]
+#[derive(Clone, EnumIter, Ord, PartialOrd, Eq, PartialEq)]
 pub enum ArmourParts {
     Head, Shoulder, Body, Hands, Waist, Legs, Feet, Shield
 }
 
-#[derive(EnumIter)]
+#[derive(Clone, EnumIter, Ord, PartialOrd, Eq, PartialEq)]
 pub enum ArmourWeights {
     Light, Medium, Heavy
 }
 
-#[derive(EnumIter)]
+#[derive(Clone, EnumIter, Ord, PartialOrd, Eq, PartialEq)]
 pub enum ArmourTraits {
     Divines, Invigorating, Impenetrable, Infused, Nirnhoned, Reinforced, Sturdy, Training, WellFitted
 }
 
-#[derive(EnumIter)]
+#[derive(Clone, EnumIter, Ord, PartialOrd, Eq, PartialEq)]
 pub enum ArmourEnchantments {
     Health, Magicka, Stamina, PrismaticDefense
 }

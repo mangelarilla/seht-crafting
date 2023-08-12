@@ -2,28 +2,28 @@ use std::fmt::{Display, Formatter};
 use strum::EnumIter;
 use crate::entities::{ItemInfo};
 
-#[derive(Clone, EnumIter)]
+#[derive(Clone, EnumIter, Ord, PartialOrd, Eq, PartialEq)]
 pub enum OneHandedWeapons {
     Mace, Dagger, Sword, Axe
 }
 
-#[derive(Clone, EnumIter)]
+#[derive(Clone, EnumIter, Ord, PartialOrd, Eq, PartialEq)]
 pub enum TwoHandedWeapons {
     Mace, Sword, Axe, FrostStaff, FireStaff, LightningStaff, RestorationStaff, Bow
 }
 
-#[derive(Clone)]
+#[derive(Clone, Ord, PartialOrd, Eq, PartialEq)]
 pub enum WeaponKind {
     OneHanded(OneHandedWeapons),
     TwoHanded(TwoHandedWeapons)
 }
 
-#[derive(Clone, EnumIter)]
+#[derive(Clone, EnumIter, Ord, PartialOrd, Eq, PartialEq)]
 pub enum WeaponTraits {
     Charged, Defending, Powered, Infused, Nirnhoned, Precise, Sharpened, Training, Decisive
 }
 
-#[derive(Clone, EnumIter)]
+#[derive(Clone, EnumIter, Ord, PartialOrd, Eq, PartialEq)]
 pub enum WeaponEnchantments {
     Fire, Frost, Shock, Poison, Foulness, DecreaseHealth, Hardening, AbsorbHealth, AbsorbMagicka,
     AbsorbStamina, WeaponDamage, Weakening, Crushing, PrismaticOnslaught

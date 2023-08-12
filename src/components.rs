@@ -151,8 +151,24 @@ De cara a solicitar un crafting a los {} en el siguiente canal se deberá rellen
 - **Consumibles:** Para 🍖 comida y 🧪 pociones.
 - **Encantamientos:** Para los distintos glifos de armas, armadura y joyeria.
 
-Se deberan enviar los materiales al fabricante que se encargue y abonarle el pago de __**{}**__ de oro.",
-        Mention::Role(crafters.id), price)
+Se deberan enviar los materiales al fabricante que se encargue y abonar el pago al banco del gremio de __**{}**__ de oro por pieza, __**{}**__ de oro por set",
+        Mention::Role(crafters.id), price, *price * 5.0)
+}
+
+pub fn confirmation_row(name: &str) -> CreateActionRow {
+    let mut b = CreateActionRow::default();
+
+    b.create_button(|b| b
+        .custom_id(name)
+        .emoji(ReactionType::Unicode("👍".to_string()))
+        .label("Si")
+        .style(ButtonStyle::Success));
+    b.create_button(|b| b
+        .custom_id(format!("{}_no", name))
+        .emoji(ReactionType::Unicode("👎".to_string()))
+        .label("No")
+        .style(ButtonStyle::Danger));
+    b
 }
 
 pub fn menu_action_row() -> CreateActionRow {
@@ -166,7 +182,7 @@ pub fn menu_action_row() -> CreateActionRow {
     b.create_button(|b| b
         .custom_id("Consumables")
         .emoji(ReactionType::Unicode("🍖".to_string()))
-        .label("Consumables")
+        .label("Consumibles")
         .style(ButtonStyle::Success));
     b.create_button(|b| b
         .custom_id("Enchantment")

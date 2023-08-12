@@ -2,17 +2,17 @@ use std::fmt::{Display, Formatter};
 use strum::EnumIter;
 use crate::entities::ItemInfo;
 
-#[derive(Clone, EnumIter)]
+#[derive(Clone, EnumIter, Ord, PartialOrd, Eq, PartialEq)]
 pub enum Jewelries {
     Necklace, Ring
 }
 
-#[derive(EnumIter)]
+#[derive(Clone, EnumIter, Ord, PartialOrd, Eq, PartialEq)]
 pub enum JewelryTraits {
     Arcane, Bloodthirsty, Harmony, Healthy, Infused, Protective, Robust, Swift, Triune
 }
 
-#[derive(EnumIter)]
+#[derive(Clone, EnumIter, Ord, PartialOrd, Eq, PartialEq)]
 pub enum JewelryEnchantments {
     IncreasePhysicalHarm, IncreaseMagicalHarm, HealthRecovery, MagickaRecovery, StaminaRecovery,
     ReduceSpellCost, ReduceFeatCost, Shielding, Bashing, DecreasePhysicalHarm, DecreaseSpellHarm,

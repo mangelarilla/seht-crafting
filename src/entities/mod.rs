@@ -9,14 +9,14 @@ pub mod armour;
 pub mod weapon;
 pub mod jewelry;
 
-#[derive(Clone)]
+#[derive(Clone, Ord, PartialOrd, Eq, PartialEq)]
 pub enum Gear {
     Weapon(WeaponKind),
     Armour(ArmourParts),
     Jewelry(Jewelries)
 }
 
-#[derive(EnumIter)]
+#[derive(EnumIter, Clone, Ord, PartialOrd, Eq, PartialEq)]
 pub enum GearQuality {
     Green, Blue, Purple, Yellow
 }
