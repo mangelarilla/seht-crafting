@@ -1,3 +1,4 @@
+use regex::Regex;
 use serenity::model::prelude::*;
 use serenity::model::prelude::component::ActionRowComponent::*;
 use serenity::model::prelude::message_component::*;
@@ -35,8 +36,12 @@ pub async fn enchantment_modal(interaction: ModalSubmitInteraction, ctx: &Contex
             .data.components.get(0).unwrap()
             .components.get(0).unwrap()
         {
+            let re = Regex::new(r"<@&\d+>").unwrap();
+            let msg = &interaction.message.unwrap();
+            let role = re.captures(&msg.content).unwrap()
+                .get(0).unwrap().as_str();
             interaction.channel_id.send_message(&ctx.http, |m|
-                m.content(format!("__**‼️Peticion de Encantamientos para {}‼️**__ \n {}", Mention::User(interaction.user.id), &input.value))
+                m.content(format!("{}\n\n__**‼️Peticion de Encantamientos para {}‼️**__ \n {}", role, Mention::User(interaction.user.id), &input.value))
             ).await.unwrap();
         }
     }

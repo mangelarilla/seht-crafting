@@ -1,125 +1,173 @@
-use std::fmt::{Display, Formatter};
-use strum::EnumIter;
-use crate::entities::ItemInfo;
+use strum_macros::{Display, EnumIter, EnumMessage, EnumString};
+use std::string::ToString;
+use crate::entities::{GearQuality, get_enchantment_quality_cost, MaterialCost};
+use crate::entities::materials::{ArmourTraitMaterials, BlacksmithQualityMaterials, EssenceRunes, PartMaterials, PotencyRunes, TailoringQualityMaterials};
 
-#[derive(Clone, EnumIter, Ord, PartialOrd, Eq, PartialEq)]
+#[derive(Clone, EnumIter, Ord, PartialOrd, Eq, PartialEq, Display, EnumString)]
 pub enum ArmourParts {
-    Head, Shoulder, Body, Hands, Waist, Legs, Feet, Shield
+    #[strum(serialize = "Cabeza")]
+    Head,
+    #[strum(serialize = "Hombros")]
+    Shoulder,
+    #[strum(serialize = "Cuerpo")]
+    Body,
+    #[strum(serialize = "Manos")]
+    Hands,
+    #[strum(serialize = "Cintura")]
+    Waist,
+    #[strum(serialize = "Piernas")]
+    Legs,
+    #[strum(serialize = "Pies")]
+    Feet,
+    #[strum(serialize = "Escudo")]
+    Shield
 }
 
-#[derive(Clone, EnumIter, Ord, PartialOrd, Eq, PartialEq)]
+#[derive(Clone, EnumIter, Ord, PartialOrd, Eq, PartialEq, Display, EnumString)]
 pub enum ArmourWeights {
-    Light, Medium, Heavy
+    #[strum(serialize = "Ligera")]
+    Light,
+    #[strum(serialize = "Media")]
+    Medium,
+    #[strum(serialize = "Pesada")]
+    Heavy
 }
 
-#[derive(Clone, EnumIter, Ord, PartialOrd, Eq, PartialEq)]
+#[derive(Clone, EnumIter, Ord, PartialOrd, Eq, PartialEq, Display, EnumString, EnumMessage)]
 pub enum ArmourTraits {
-    Divines, Invigorating, Impenetrable, Infused, Nirnhoned, Reinforced, Sturdy, Training, WellFitted
+    /// Aumenta los efectos de las piedras de Mundus
+    #[strum(serialize = "Divinidad")]
+    Divines,
+    /// Aumenta la recuperación de salud, magia y aguante
+    #[strum(serialize = "Vigorización")]
+    Invigorating,
+    /// Aumenta la resistencia a críticos y la durabilidad
+    #[strum(serialize = "Impenetrabilidad")]
+    Impenetrable,
+    /// Aumenta el efecto del encantamiento de la armadura
+    #[strum(serialize = "Imbuición")]
+    Infused,
+    /// Aumenta la resistencia física y a hechizos
+    #[strum(serialize = "Temple de Nirn")]
+    Nirnhoned,
+    /// Aumenta el valor de armadura de este objeto
+    #[strum(serialize = "Refuerzo")]
+    Reinforced,
+    /// Reduce el coste de bloquear
+    #[strum(serialize = "Solidez")]
+    Sturdy,
+    /// Aumenta la experiencia ganada con cada muerte
+    #[strum(serialize = "Entrenamiento")]
+    Training,
+    /// Reduce el coste de esquivar rodando y esprintar
+    #[strum(serialize = "Buen ajuste")]
+    WellFitted
 }
 
-#[derive(Clone, EnumIter, Ord, PartialOrd, Eq, PartialEq)]
+#[derive(Clone, EnumIter, Ord, PartialOrd, Eq, PartialEq, Display, EnumString, EnumMessage)]
 pub enum ArmourEnchantments {
-    Health, Magicka, Stamina, PrismaticDefense
+    /// Aumenta la salud máxima
+    #[strum(serialize = "Glifo de salud")]
+    Health,
+    /// Aumenta la magia máxima
+    #[strum(serialize = "Glifo de magia")]
+    Magicka,
+    /// Aumenta el aguante máximo
+    #[strum(serialize = "Glifo de aguante")]
+    Stamina,
+    /// Aumente la magia, salud y aguante máximos
+    #[strum(serialize = "Glifo de defensa prismática")]
+    PrismaticDefense
 }
 
 pub struct Armour {
     pub kind: ArmourParts,
     pub weight: ArmourWeights,
     pub armour_trait: ArmourTraits,
-    pub enchantment: ArmourEnchantments
+    pub enchantment: Option<ArmourEnchantments>,
+    pub quality: GearQuality
 }
 
-impl TryFrom<String> for ArmourParts {
-    type Error = String;
-
-    fn try_from(value: String) -> Result<Self, Self::Error> {
-        if value == ArmourParts::Head.to_string() { Ok(ArmourParts::Head) }
-        else if value == ArmourParts::Shoulder.to_string() { Ok(ArmourParts::Shoulder) }
-        else if value == ArmourParts::Body.to_string() { Ok(ArmourParts::Body) }
-        else if value == ArmourParts::Hands.to_string() { Ok(ArmourParts::Hands) }
-        else if value == ArmourParts::Waist.to_string() { Ok(ArmourParts::Waist) }
-        else if value == ArmourParts::Legs.to_string() { Ok(ArmourParts::Legs) }
-        else if value == ArmourParts::Feet.to_string() { Ok(ArmourParts::Feet) }
-        else if value == ArmourParts::Shield.to_string() { Ok(ArmourParts::Shield) }
-        else { Err(format!("{} is not an armour part", value)) }
-    }
-}
-
-impl Display for ArmourParts {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+impl MaterialCost for ArmourTraits {
+    fn cost(&self) -> Vec<(i32, String)> {
         match *self {
-            ArmourParts::Head => write!(f, "Cabeza"),
-            ArmourParts::Shoulder => write!(f, "Hombros"),
-            ArmourParts::Body => write!(f, "Cuerpo"),
-            ArmourParts::Hands => write!(f, "Manos"),
-            ArmourParts::Waist =>write!(f, "Cintura"),
-            ArmourParts::Legs => write!(f, "Piernas"),
-            ArmourParts::Feet => write!(f, "Pies"),
-            ArmourParts::Shield => write!(f, "Escudo")
+            ArmourTraits::Divines => vec![(1, ArmourTraitMaterials::Sapphire.to_string())],
+            ArmourTraits::Invigorating => vec![(1, ArmourTraitMaterials::Garnet.to_string())],
+            ArmourTraits::Impenetrable => vec![(1, ArmourTraitMaterials::Diamond.to_string())],
+            ArmourTraits::Infused => vec![(1, ArmourTraitMaterials::Bloodstone.to_string())],
+            ArmourTraits::Nirnhoned => vec![(1, ArmourTraitMaterials::FortifiedNirncrux.to_string())],
+            ArmourTraits::Reinforced => vec![(1, ArmourTraitMaterials::Sardonyx.to_string())],
+            ArmourTraits::Sturdy => vec![(1, ArmourTraitMaterials::Quartz.to_string())],
+            ArmourTraits::Training => vec![(1, ArmourTraitMaterials::Emerald.to_string())],
+            ArmourTraits::WellFitted => vec![(1, ArmourTraitMaterials::Almandine.to_string())],
         }
     }
 }
 
-impl Display for ArmourWeights {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+impl MaterialCost for ArmourEnchantments {
+    fn cost(&self) -> Vec<(i32, String)> {
         match *self {
-            ArmourWeights::Light => write!(f, "Ligera"),
-            ArmourWeights::Medium => write!(f, "Media"),
-            ArmourWeights::Heavy => write!(f, "Pesada"),
+            ArmourEnchantments::Health => vec![(1, PotencyRunes::Repora.to_string()), (1, EssenceRunes::Oko.to_string())],
+            ArmourEnchantments::Magicka => vec![(1, PotencyRunes::Repora.to_string()), (1, EssenceRunes::Makko.to_string())],
+            ArmourEnchantments::Stamina => vec![(1, PotencyRunes::Repora.to_string()), (1, EssenceRunes::Deni.to_string())],
+            ArmourEnchantments::PrismaticDefense => vec![(1, PotencyRunes::Repora.to_string()), (1, EssenceRunes::Hakeijo.to_string())],
         }
     }
 }
 
-impl Display for ArmourTraits {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match *self {
-            ArmourTraits::Divines => write!(f, "Divinidad"),
-            ArmourTraits::Invigorating => write!(f, "Vigorización"),
-            ArmourTraits::Impenetrable => write!(f, "Impenetrabilidad"),
-            ArmourTraits::Infused => write!(f, "Imbuición"),
-            ArmourTraits::Nirnhoned => write!(f, "Temple de Nirn"),
-            ArmourTraits::Reinforced => write!(f, "Refuerzo"),
-            ArmourTraits::Sturdy => write!(f, "Solidez"),
-            ArmourTraits::Training => write!(f, "Entrenamiento"),
-            ArmourTraits::WellFitted => write!(f, "Buen ajuste"),
+fn get_quality_mats(weight: &ArmourWeights, quality: &GearQuality) -> Vec<(i32, String)> {
+    match quality {
+        GearQuality::White => vec![],
+        GearQuality::Green => match weight {
+            ArmourWeights::Heavy => vec![(2, BlacksmithQualityMaterials::HoningStone.to_string())],
+            _ => vec![(2, TailoringQualityMaterials::Hemming.to_string())]
+        }
+        GearQuality::Blue => match weight {
+            ArmourWeights::Heavy => vec![(3, BlacksmithQualityMaterials::DwarvenOil.to_string())],
+            _ => vec![(3, TailoringQualityMaterials::Embroidery.to_string())]
+        }
+        GearQuality::Purple => match weight {
+            ArmourWeights::Heavy => vec![(4, BlacksmithQualityMaterials::GrainSolvent.to_string())],
+            _ => vec![(4, TailoringQualityMaterials::ElegantLining.to_string())]
+        }
+        GearQuality::Yellow => match weight {
+            ArmourWeights::Heavy => vec![(8, BlacksmithQualityMaterials::TemperingAlloy.to_string())],
+            _ => vec![(8, TailoringQualityMaterials::DreughWax.to_string())]
         }
     }
 }
 
-impl ItemInfo for ArmourTraits {
-    fn description(&self) -> String {
-        match *self {
-            ArmourTraits::Divines => "Aumenta los efectos de las piedras de Mundus".to_string(),
-            ArmourTraits::Invigorating => "Aumenta la recuperación de salud, magia y aguante".to_string(),
-            ArmourTraits::Impenetrable => "Aumenta la resistencia a críticos y la durabilidad".to_string(),
-            ArmourTraits::Infused => "Aumenta el efecto del encantamiento de la armadura".to_string(),
-            ArmourTraits::Nirnhoned => "Aumenta la resistencia física y a hechizos".to_string(),
-            ArmourTraits::Reinforced => "Aumenta el valor de armadura de este objeto".to_string(),
-            ArmourTraits::Sturdy => "Reduce el coste de bloquear".to_string(),
-            ArmourTraits::Training => "Aumenta la experiencia ganada con cada muerte".to_string(),
-            ArmourTraits::WellFitted => "Reduce el coste de esquivar rodando y esprintar".to_string(),
+fn get_part_mats(part: &ArmourParts, weight: &ArmourWeights) -> Vec<(i32, String)> {
+    match part {
+        ArmourParts::Body => match weight {
+            ArmourWeights::Heavy => vec![(150, PartMaterials::RubediteIngots.to_string())],
+            ArmourWeights::Light => vec![(150, PartMaterials::AncestorSilk.to_string())],
+            ArmourWeights::Medium => vec![(150, PartMaterials::RubedoLeather.to_string())],
+        }
+        ArmourParts::Legs => match weight {
+            ArmourWeights::Heavy => vec![(140, PartMaterials::RubediteIngots.to_string())],
+            ArmourWeights::Light => vec![(140, PartMaterials::AncestorSilk.to_string())],
+            ArmourWeights::Medium => vec![(140, PartMaterials::RubedoLeather.to_string())],
+        }
+        ArmourParts::Shield => vec![(140, PartMaterials::SandedRubyAsh.to_string())],
+        _ => match weight {
+            ArmourWeights::Heavy => vec![(130, PartMaterials::RubediteIngots.to_string())],
+            ArmourWeights::Light => vec![(130, PartMaterials::AncestorSilk.to_string())],
+            ArmourWeights::Medium => vec![(130, PartMaterials::RubedoLeather.to_string())],
         }
     }
 }
 
-impl Display for ArmourEnchantments {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match *self {
-            ArmourEnchantments::Health => write!(f, "Glifo de salud"),
-            ArmourEnchantments::Magicka => write!(f, "Glifo de magia"),
-            ArmourEnchantments::Stamina => write!(f, "Glifo de aguante"),
-            ArmourEnchantments::PrismaticDefense => write!(f, "Glifo de defensa prismática"),
+impl MaterialCost for Armour {
+    fn cost(&self) -> Vec<(i32, String)> {
+        let mut vec = Vec::new();
+        vec.append(&mut get_part_mats(&self.kind, &self.weight));
+        vec.append(&mut self.armour_trait.cost());
+        if let Some(e) = &self.enchantment {
+            vec.append(&mut e.cost());
         }
-    }
-}
-
-impl ItemInfo for ArmourEnchantments {
-    fn description(&self) -> String {
-        match *self {
-            ArmourEnchantments::Health => "Aumenta la salud máxima".to_string(),
-            ArmourEnchantments::Magicka => "Aumenta la magia máxima".to_string(),
-            ArmourEnchantments::Stamina => "Aumenta el aguante máximo".to_string(),
-            ArmourEnchantments::PrismaticDefense => "Aumente la magia, salud y aguante máximos".to_string(),
-        }
+        vec.append(&mut get_enchantment_quality_cost(&self.quality));
+        vec.append(&mut get_quality_mats(&self.weight, &self.quality));
+        vec
     }
 }

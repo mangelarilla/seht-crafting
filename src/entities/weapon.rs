@@ -1,38 +1,155 @@
 use std::fmt::{Display, Formatter};
-use strum::EnumIter;
-use crate::entities::{ItemInfo};
+use strum_macros::{Display, EnumIter, EnumMessage, EnumString};
+use std::string::ToString;
+use crate::entities::{GearQuality, get_enchantment_quality_cost, MaterialCost};
+use crate::entities::materials::{BlacksmithQualityMaterials, EssenceRunes, PartMaterials, PotencyRunes, WeaponTraitMaterials, WoodworkingQualityMaterials};
 
-#[derive(Clone, EnumIter, Ord, PartialOrd, Eq, PartialEq)]
+#[derive(Clone, EnumIter, Ord, PartialOrd, Eq, PartialEq, Display, EnumString, EnumMessage)]
 pub enum OneHandedWeapons {
-    Mace, Dagger, Sword, Axe
+    /// A una mano
+    #[strum(serialize = "Maza")]
+    Mace,
+    /// A una mano
+    #[strum(serialize = "Daga")]
+    Dagger,
+    /// A una mano
+    #[strum(serialize = "Espada")]
+    Sword,
+    /// A una mano
+    #[strum(serialize = "Hacha")]
+    Axe
 }
 
-#[derive(Clone, EnumIter, Ord, PartialOrd, Eq, PartialEq)]
+#[derive(Clone, EnumIter, Ord, PartialOrd, Eq, PartialEq, Display, EnumString, EnumMessage)]
 pub enum TwoHandedWeapons {
-    Mace, Sword, Axe, FrostStaff, FireStaff, LightningStaff, RestorationStaff, Bow
+    /// A dos manos
+    #[strum(serialize = "Mazo")]
+    Mace,
+    /// A dos manos
+    #[strum(serialize = "Mandoble")]
+    Sword,
+    /// A dos manos
+    #[strum(serialize = "Hacha de combate")]
+    Axe,
+    /// A dos manos
+    #[strum(serialize = "Bastón glacial")]
+    FrostStaff,
+    /// A dos manos
+    #[strum(serialize = "Bastón infernal")]
+    FireStaff,
+    /// A dos manos
+    #[strum(serialize = "Bastón eléctrico")]
+    LightningStaff,
+    /// A dos manos
+    #[strum(serialize = "Bastón de restauración")]
+    RestorationStaff,
+    /// A dos manos
+    #[strum(serialize = "Arco")]
+    Bow
 }
 
-#[derive(Clone, Ord, PartialOrd, Eq, PartialEq)]
+#[derive(Clone, Ord, PartialOrd, Eq, PartialEq, EnumMessage)]
 pub enum WeaponKind {
     OneHanded(OneHandedWeapons),
     TwoHanded(TwoHandedWeapons)
 }
 
-#[derive(Clone, EnumIter, Ord, PartialOrd, Eq, PartialEq)]
+#[derive(Clone, EnumIter, Ord, PartialOrd, Eq, PartialEq, Display, EnumString, EnumMessage)]
 pub enum WeaponTraits {
-    Charged, Defending, Powered, Infused, Nirnhoned, Precise, Sharpened, Training, Decisive
+    /// Aumenta la probabilidad de aplicar efectos de estado
+    #[strum(serialize = "Carga")]
+    Charged,
+    /// Aumenta la resistencia física y a hechizos
+    #[strum(serialize = "Defensa")]
+    Defending,
+    /// Aumenta la curación realizada
+    #[strum(serialize = "Potencia")]
+    Powered,
+    /// Aumenta el encantamiento de las armas
+    #[strum(serialize = "Imbuido")]
+    Infused,
+    /// Aumenta el daño del arma
+    #[strum(serialize = "Temple de Nirn")]
+    Nirnhoned,
+    /// Aumenta el crítico de arma y hechizo
+    #[strum(serialize = "Precisión")]
+    Precise,
+    /// Aumenta la penetración física y mágica
+    #[strum(serialize = "Filo")]
+    Sharpened,
+    /// Aumenta la experiencia ganada con cada muerte
+    #[strum(serialize = "Entrenamiento")]
+    Training,
+    /// Aumenta la ganancia de puntos de máxima
+    #[strum(serialize = "Decisivo")]
+    Decisive
 }
 
-#[derive(Clone, EnumIter, Ord, PartialOrd, Eq, PartialEq)]
+#[derive(Clone, EnumIter, Ord, PartialOrd, Eq, PartialEq, Display, EnumString, EnumMessage)]
 pub enum WeaponEnchantments {
-    Fire, Frost, Shock, Poison, Foulness, DecreaseHealth, Hardening, AbsorbHealth, AbsorbMagicka,
-    AbsorbStamina, WeaponDamage, Weakening, Crushing, PrismaticOnslaught
+    /// Inflige daño de llamas
+    #[strum(serialize = "Glifo de fuego")]
+    Fire,
+    /// Inflige daño de escarcha
+    #[strum(serialize = "Glifo de escarcha")]
+    Frost,
+    /// Inflige daño de descarga eléctica
+    #[strum(serialize = "Glifo de descarga")]
+    Shock,
+    /// Inflige daño de veneno
+    #[strum(serialize = "Glifo de veneno")]
+    Poison,
+    /// Inflige daño de enfermedad
+    #[strum(serialize = "Glifo de podredumbre")]
+    Foulness,
+    /// Inflige daño de Oblivion usando la salud máxima del enemigo
+    #[strum(serialize = "Glifo de disminución de salud")]
+    DecreaseHealth,
+    /// Otorga un escudo de daño que protege del daño
+    #[strum(serialize = "Glifo de robustez")]
+    Hardening,
+    /// Inglige daño de magia y restablece salud
+    #[strum(serialize = "Glifo de absorción de salud")]
+    AbsorbHealth,
+    /// Inflige daño de magia y recuperas magia
+    #[strum(serialize = "Glifo de absorción de magia")]
+    AbsorbMagicka,
+    /// Inflige daño físico y recuperas aguante
+    #[strum(serialize = "Glifo de absorción de aguante")]
+    AbsorbStamina,
+    /// Aumenta el daño de arma y hechizo
+    #[strum(serialize = "Glifo de daño por arma")]
+    WeaponDamage,
+    /// Reduce el daño de arma y hechizo del objetivo
+    #[strum(serialize = "Glifo de debilidad")]
+    Weakening,
+    /// Reduce la resistencia física y a hechizos del objetivo
+    #[strum(serialize = "Glifo de aplastamiento")]
+    Crushing,
+    /// Inflige daño de magia y restablece salud, magia y aguante
+    #[strum(serialize = "Glifo de asalto prismático")]
+    PrismaticOnslaught
 }
 
 pub struct Weapon {
     pub kind: WeaponKind,
     pub weapon_trait: WeaponTraits,
-    pub enchantment: WeaponEnchantments
+    pub enchantment: Option<WeaponEnchantments>,
+    pub quality: GearQuality
+}
+
+impl std::str::FromStr for WeaponKind {
+    type Err = strum::ParseError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if let Ok(w) = OneHandedWeapons::from_str(s) {
+            Ok(WeaponKind::OneHanded(w))
+        } else if let Ok(w) = TwoHandedWeapons::from_str(s) {
+            Ok(WeaponKind::TwoHanded(w))
+        } else {
+            Err(strum::ParseError::VariantNotFound)
+        }
+    }
 }
 
 impl Display for WeaponKind {
@@ -44,157 +161,117 @@ impl Display for WeaponKind {
     }
 }
 
-impl TryFrom<String> for WeaponKind {
-    type Error = String;
-
-    fn try_from(value: String) -> Result<Self, Self::Error> {
-        let one_handed = OneHandedWeapons::try_from(value.to_string())
-            .map(|w| Self::OneHanded(w));
-
-        if one_handed.is_ok() {
-            one_handed
-        } else {
-            TwoHandedWeapons::try_from(value)
-                .map(|w| Self::TwoHanded(w))
-        }
-    }
-}
-
-impl TryFrom<String> for OneHandedWeapons {
-    type Error = String;
-
-    fn try_from(value: String) -> Result<Self, Self::Error> {
-        if value == OneHandedWeapons::Mace.to_string() { Ok(OneHandedWeapons::Mace) }
-        else if value == OneHandedWeapons::Dagger.to_string() { Ok(OneHandedWeapons::Dagger) }
-        else if value == OneHandedWeapons::Sword.to_string() { Ok(OneHandedWeapons::Sword) }
-        else if value == OneHandedWeapons::Axe.to_string() { Ok(OneHandedWeapons::Axe) }
-        else { Err(format!("{} is not a weapon", value)) }
-    }
-}
-
-impl Display for OneHandedWeapons {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+impl MaterialCost for OneHandedWeapons {
+    fn cost(&self) -> Vec<(i32, String)> {
         match *self {
-            OneHandedWeapons::Mace => write!(f, "Maza"),
-            OneHandedWeapons::Dagger => write!(f, "Daga"),
-            OneHandedWeapons::Sword => write!(f, "Espada"),
-            OneHandedWeapons::Axe => write!(f, "Hacha"),
+            OneHandedWeapons::Dagger => vec![(100, PartMaterials::RubediteIngots.to_string())],
+            _ => vec![(110, PartMaterials::RubediteIngots.to_string())],
         }
     }
 }
 
-impl ItemInfo for OneHandedWeapons {
-    fn description(&self) -> String {
-        "A una mano".to_string()
-    }
-}
-
-impl TryFrom<String> for TwoHandedWeapons {
-    type Error = String;
-
-    fn try_from(value: String) -> Result<Self, Self::Error> {
-        if value == TwoHandedWeapons::Mace.to_string() { Ok(TwoHandedWeapons::Mace) }
-        else if value == TwoHandedWeapons::Bow.to_string() { Ok(TwoHandedWeapons::Bow) }
-        else if value == TwoHandedWeapons::Sword.to_string() { Ok(TwoHandedWeapons::Sword) }
-        else if value == TwoHandedWeapons::FrostStaff.to_string() { Ok(TwoHandedWeapons::FrostStaff) }
-        else if value == TwoHandedWeapons::FireStaff.to_string() { Ok(TwoHandedWeapons::FireStaff) }
-        else if value == TwoHandedWeapons::LightningStaff.to_string() { Ok(TwoHandedWeapons::LightningStaff) }
-        else if value == TwoHandedWeapons::RestorationStaff.to_string() { Ok(TwoHandedWeapons::RestorationStaff) }
-        else { Err(format!("{} is not a weapon", value)) }
-    }
-}
-
-impl Display for TwoHandedWeapons {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+impl MaterialCost for TwoHandedWeapons {
+    fn cost(&self) -> Vec<(i32, String)> {
         match *self {
-            TwoHandedWeapons::Mace => write!(f, "Mazo"),
-            TwoHandedWeapons::Sword => write!(f, "Mandoble"),
-            TwoHandedWeapons::Axe => write!(f, "Hacha de combate"),
-            TwoHandedWeapons::FrostStaff => write!(f, "Bastón eléctrico"),
-            TwoHandedWeapons::FireStaff => write!(f, "Bastón infernal"),
-            TwoHandedWeapons::LightningStaff => write!(f, "Bastón de restauración"),
-            TwoHandedWeapons::RestorationStaff => write!(f, "Bastón glacial"),
-            TwoHandedWeapons::Bow => write!(f, "Arco"),
+            TwoHandedWeapons::Bow |
+            TwoHandedWeapons::FireStaff |
+            TwoHandedWeapons::LightningStaff |
+            TwoHandedWeapons::RestorationStaff => vec![(120, PartMaterials::SandedRubyAsh.to_string())],
+            _ => vec![(140, PartMaterials::RubediteIngots.to_string())]
         }
     }
 }
 
-impl ItemInfo for TwoHandedWeapons {
-    fn description(&self) -> String {
-        "A dos manos".to_string()
+impl MaterialCost for WeaponKind {
+    fn cost(&self) -> Vec<(i32, String)> {
+        match self {
+            WeaponKind::OneHanded(w) => w.cost(),
+            WeaponKind::TwoHanded(w) => w.cost()
+        }
     }
 }
 
-impl Display for WeaponTraits {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+impl MaterialCost for WeaponTraits {
+    fn cost(&self) -> Vec<(i32, String)> {
         match *self {
-            WeaponTraits::Charged => write!(f, "Carga"),
-            WeaponTraits::Defending => write!(f, "Defensa"),
-            WeaponTraits::Powered => write!(f, "Potencia"),
-            WeaponTraits::Infused => write!(f, "Imbuido"),
-            WeaponTraits::Nirnhoned => write!(f, "Temple de Nirn"),
-            WeaponTraits::Precise => write!(f, "Precisión"),
-            WeaponTraits::Sharpened => write!(f, "Filo"),
-            WeaponTraits::Training => write!(f, "Entrenamiento"),
-            WeaponTraits::Decisive => write!(f, "Decisivo"),
+            WeaponTraits::Charged => vec![(1, WeaponTraitMaterials::Amethyst.to_string())],
+            WeaponTraits::Defending => vec![(1, WeaponTraitMaterials::Turquoise.to_string())],
+            WeaponTraits::Powered => vec![(1, WeaponTraitMaterials::Chysolite.to_string())],
+            WeaponTraits::Infused => vec![(1, WeaponTraitMaterials::Jade.to_string())],
+            WeaponTraits::Nirnhoned => vec![(1, WeaponTraitMaterials::PotentNirncrux.to_string())],
+            WeaponTraits::Precise => vec![(1, WeaponTraitMaterials::Ruby.to_string())],
+            WeaponTraits::Sharpened => vec![(1, WeaponTraitMaterials::FireOpal.to_string())],
+            WeaponTraits::Training => vec![(1, WeaponTraitMaterials::Carnelian.to_string())],
+            WeaponTraits::Decisive => vec![(1, WeaponTraitMaterials::Citrine.to_string())],
         }
     }
 }
 
-impl ItemInfo for WeaponTraits {
-    fn description(&self) -> String {
+impl MaterialCost for WeaponEnchantments {
+    fn cost(&self) -> Vec<(i32, String)> {
         match *self {
-            WeaponTraits::Charged => "Aumenta la probabilidad de aplicar efectos de estado".to_string(),
-            WeaponTraits::Defending => "Aumenta la resistencia física y a hechizos".to_string(),
-            WeaponTraits::Powered => "Aumenta la curación realizada".to_string(),
-            WeaponTraits::Infused => "Aumenta el encantamiento de las armas".to_string(),
-            WeaponTraits::Nirnhoned => "Aumenta el daño del arma".to_string(),
-            WeaponTraits::Precise => "Aumenta el crítico de arma y hechizo".to_string(),
-            WeaponTraits::Sharpened => "Aumenta la penetración física y mágica".to_string(),
-            WeaponTraits::Training => "Aumenta la experiencia ganada con cada muerte".to_string(),
-            WeaponTraits::Decisive => "Aumenta la ganancia de puntos de máxima".to_string(),
+            WeaponEnchantments::Fire => vec![(1, PotencyRunes::Repora.to_string()), (1, EssenceRunes::Rakeipa.to_string())],
+            WeaponEnchantments::Frost => vec![(1, PotencyRunes::Repora.to_string()), (1, EssenceRunes::Dekeipa.to_string())],
+            WeaponEnchantments::Shock => vec![(1, PotencyRunes::Repora.to_string()), (1, EssenceRunes::Meip.to_string())],
+            WeaponEnchantments::Poison => vec![(1, PotencyRunes::Repora.to_string()), (1, EssenceRunes::Kuoko.to_string())],
+            WeaponEnchantments::Foulness => vec![(1, PotencyRunes::Repora.to_string()), (1, EssenceRunes::Haoko.to_string())],
+            WeaponEnchantments::DecreaseHealth => vec![(1, PotencyRunes::Itade.to_string()), (1, EssenceRunes::Okoma.to_string())],
+            WeaponEnchantments::Hardening => vec![(1, PotencyRunes::Repora.to_string()), (1, EssenceRunes::Deteri.to_string())],
+            WeaponEnchantments::AbsorbHealth => vec![(1, PotencyRunes::Itade.to_string()), (1, EssenceRunes::Oko.to_string())],
+            WeaponEnchantments::AbsorbMagicka => vec![(1, PotencyRunes::Itade.to_string()), (1, EssenceRunes::Makko.to_string())],
+            WeaponEnchantments::AbsorbStamina => vec![(1, PotencyRunes::Itade.to_string()), (1, EssenceRunes::Deni.to_string())],
+            WeaponEnchantments::WeaponDamage => vec![(1, PotencyRunes::Repora.to_string()), (1, EssenceRunes::Okori.to_string())],
+            WeaponEnchantments::Weakening => vec![(1, PotencyRunes::Itade.to_string()), (1, EssenceRunes::Okori.to_string())],
+            WeaponEnchantments::Crushing => vec![(1, PotencyRunes::Itade.to_string()), (1, EssenceRunes::Deteri.to_string())],
+            WeaponEnchantments::PrismaticOnslaught => vec![(1, PotencyRunes::Itade.to_string()), (1, EssenceRunes::Hakeijo.to_string())],
         }
     }
 }
 
-impl Display for WeaponEnchantments {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match *self {
-            WeaponEnchantments::Fire => write!(f, "Glifo de fuego"),
-            WeaponEnchantments::Frost => write!(f, "Glifo de escarcha"),
-            WeaponEnchantments::Shock => write!(f, "Glifo de descarga"),
-            WeaponEnchantments::Poison => write!(f, "Glifo de veneno"),
-            WeaponEnchantments::Foulness => write!(f, "Glifo de podredumbre"),
-            WeaponEnchantments::DecreaseHealth => write!(f, "Glifo de disminución de salud"),
-            WeaponEnchantments::Hardening => write!(f, "Glifo de robustez"),
-            WeaponEnchantments::AbsorbHealth => write!(f, "Glifo de absorción de salud"),
-            WeaponEnchantments::AbsorbMagicka => write!(f, "Glifo de absorción de magia"),
-            WeaponEnchantments::AbsorbStamina => write!(f, "Glifo de absorción de aguante"),
-            WeaponEnchantments::WeaponDamage => write!(f, "Glifo de daño por arma"),
-            WeaponEnchantments::Weakening => write!(f, "Glifo de debilidad"),
-            WeaponEnchantments::Crushing => write!(f, "Glifo de aplastamiento"),
-            WeaponEnchantments::PrismaticOnslaught => write!(f, "Glifo de asalto prismático"),
+fn get_quality_mats(weapon: &WeaponKind, quality: &GearQuality) -> Vec<(i32, String)> {
+    match quality {
+        GearQuality::White => vec![],
+        GearQuality::Green => match weapon {
+            WeaponKind::OneHanded(_) => vec![(2, BlacksmithQualityMaterials::HoningStone.to_string())],
+            WeaponKind::TwoHanded(w) => match w {
+                TwoHandedWeapons::Mace | TwoHandedWeapons::Sword | TwoHandedWeapons::Axe => vec![(2, BlacksmithQualityMaterials::HoningStone.to_string())],
+                _ => vec![(2, WoodworkingQualityMaterials::Pitch.to_string())],
+            }
+        }
+        GearQuality::Blue => match weapon {
+            WeaponKind::OneHanded(_) => vec![(3, BlacksmithQualityMaterials::DwarvenOil.to_string())],
+            WeaponKind::TwoHanded(w) => match w {
+                TwoHandedWeapons::Mace | TwoHandedWeapons::Sword | TwoHandedWeapons::Axe => vec![(3, BlacksmithQualityMaterials::DwarvenOil.to_string())],
+                _ => vec![(3, WoodworkingQualityMaterials::Turpen.to_string())],
+            }
+        }
+        GearQuality::Purple => match weapon {
+            WeaponKind::OneHanded(_) => vec![(4, BlacksmithQualityMaterials::GrainSolvent.to_string())],
+            WeaponKind::TwoHanded(w) => match w {
+                TwoHandedWeapons::Mace | TwoHandedWeapons::Sword | TwoHandedWeapons::Axe => vec![(4, BlacksmithQualityMaterials::GrainSolvent.to_string())],
+                _ => vec![(4, WoodworkingQualityMaterials::Mastic.to_string())],
+            }
+        }
+        GearQuality::Yellow => match weapon {
+            WeaponKind::OneHanded(_) => vec![(8, BlacksmithQualityMaterials::TemperingAlloy.to_string())],
+            WeaponKind::TwoHanded(w) => match w {
+                TwoHandedWeapons::Mace | TwoHandedWeapons::Sword | TwoHandedWeapons::Axe => vec![(8, BlacksmithQualityMaterials::TemperingAlloy.to_string())],
+                _ => vec![(8, WoodworkingQualityMaterials::Rosin.to_string())],
+            }
         }
     }
 }
 
-impl ItemInfo for WeaponEnchantments {
-    fn description(&self) -> String {
-        match *self {
-            WeaponEnchantments::Fire => "Inflige daño de llamas".to_string(),
-            WeaponEnchantments::Frost => "Inflige daño de escarcha".to_string(),
-            WeaponEnchantments::Shock => "Inflige daño de descarga eléctica".to_string(),
-            WeaponEnchantments::Poison => "Inflige daño de veneno".to_string(),
-            WeaponEnchantments::Foulness => "Inflige daño de enfermedad".to_string(),
-            WeaponEnchantments::DecreaseHealth => "Inflige daño de Oblivion usando la salud máxima del enemigo".to_string(),
-            WeaponEnchantments::Hardening => "Otorga un escudo de daño que protege del daño".to_string(),
-            WeaponEnchantments::AbsorbHealth => "Inglige daño de magia y restablece salud".to_string(),
-            WeaponEnchantments::AbsorbMagicka => "Inflige daño de magia y recuperas magia".to_string(),
-            WeaponEnchantments::AbsorbStamina => "Inflige daño físico y recuperas aguante".to_string(),
-            WeaponEnchantments::WeaponDamage => "Aumenta el daño de arma y hechizo".to_string(),
-            WeaponEnchantments::Weakening => "Reduce el daño de arma y hechizo del objetivo".to_string(),
-            WeaponEnchantments::Crushing => "Reduce la resistencia física y a hechizos del objetivo".to_string(),
-            WeaponEnchantments::PrismaticOnslaught => "Inflige daño de magia y restablece salud, magia y aguante".to_string(),
+impl MaterialCost for Weapon {
+    fn cost(&self) -> Vec<(i32, String)> {
+        let mut vec = Vec::new();
+        vec.append(&mut self.kind.cost());
+        vec.append(&mut self.weapon_trait.cost());
+        if let Some(e) = &self.enchantment {
+            vec.append(&mut e.cost());
         }
+        vec.append(&mut get_enchantment_quality_cost(&self.quality));
+        vec.append(&mut get_quality_mats(&self.kind, &self.quality));
+        vec
     }
 }

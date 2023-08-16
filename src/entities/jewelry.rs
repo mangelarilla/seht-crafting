@@ -1,132 +1,188 @@
-use std::fmt::{Display, Formatter};
-use strum::EnumIter;
-use crate::entities::ItemInfo;
+use strum_macros::{Display, EnumIter, EnumMessage, EnumString};
+use std::string::ToString;
+use crate::entities::{GearQuality, get_enchantment_quality_cost, MaterialCost};
+use crate::entities::materials::{EssenceRunes, JewelryQualityMaterials, JewelryTraitMaterials, PartMaterials, PotencyRunes};
 
-#[derive(Clone, EnumIter, Ord, PartialOrd, Eq, PartialEq)]
+#[derive(Clone, EnumIter, Ord, PartialOrd, Eq, PartialEq, EnumString, Display, EnumMessage)]
 pub enum Jewelries {
-    Necklace, Ring
+    /// Solo uno
+    #[strum(serialize = "Collar")]
+    Necklace,
+    /// Se asumen dos anillos
+    #[strum(serialize = "Anillo")]
+    Ring
 }
 
-#[derive(Clone, EnumIter, Ord, PartialOrd, Eq, PartialEq)]
+#[derive(Clone, EnumIter, Ord, PartialOrd, Eq, PartialEq, EnumString, Display, EnumMessage)]
 pub enum JewelryTraits {
-    Arcane, Bloodthirsty, Harmony, Healthy, Infused, Protective, Robust, Swift, Triune
+    /// Aumenta la magia máxima
+    #[strum(serialize = "Arcanidad")]
+    Arcane,
+    /// Aumenta el daño en enemigos por debajo del 90%
+    #[strum(serialize = "Sed de sangre")]
+    Bloodthirsty,
+    /// Al activar una sinergia, restaura salud, magia y aguante
+    #[strum(serialize = "Armonía")]
+    Harmony,
+    /// Aumenta la salud máxima
+    #[strum(serialize = "Saludable")]
+    Healthy,
+    /// Aumenta la eficacia del encantamiento de la joyería
+    #[strum(serialize = "Imbuido")]
+    Infused,
+    /// Aumenta la resistencia a hechizos y física
+    #[strum(serialize = "Protección")]
+    Protective,
+    /// Aumenta el aguante máximo
+    #[strum(serialize = "Robustez")]
+    Robust,
+    /// Aumenta la velocidad de movimiento
+    #[strum(serialize = "Agilidad")]
+    Swift,
+    /// Aumenta la magia, aguante y salud máximas
+    #[strum(serialize = "Trinidad")]
+    Triune
 }
 
-#[derive(Clone, EnumIter, Ord, PartialOrd, Eq, PartialEq)]
+#[derive(Clone, EnumIter, Ord, PartialOrd, Eq, PartialEq, EnumString, Display, EnumMessage)]
 pub enum JewelryEnchantments {
-    IncreasePhysicalHarm, IncreaseMagicalHarm, HealthRecovery, MagickaRecovery, StaminaRecovery,
-    ReduceSpellCost, ReduceFeatCost, Shielding, Bashing, DecreasePhysicalHarm, DecreaseSpellHarm,
-    FlameResist, FrostResist, ShockResist, PoisonResist, DiseaseResist, PotionResist, PotionBoost,
-    ReduceSkillCost, PrismaticRecovery
+    /// Añade daño de arma y hechizo, y recuperación de aguante
+    #[strum(serialize = "Glifo de aumento de daño físico")]
+    IncreasePhysicalHarm,
+    /// Añade daño de arma y hechizo, y recuperación de magia
+    #[strum(serialize = "Glifo de aumento de daño mágico")]
+    IncreaseMagicalHarm,
+    /// Añade recuperación de salud
+    #[strum(serialize = "Glifo de regeneración de salud")]
+    HealthRecovery,
+    /// Añade recuperación de magia
+    #[strum(serialize = "Glifo de regeneración de magia")]
+    MagickaRecovery,
+    /// Añade recuperación de aguante
+    #[strum(serialize = "Glifo de regeneración de aguante")]
+    StaminaRecovery,
+    /// Reduce el coste de magia de las habilidades
+    #[strum(serialize = "Glifo de reducción de coste de magia")]
+    ReduceSpellCost,
+    /// Reduce el coste de aguante de las habilidades
+    #[strum(serialize = "Glifo de reducción de coste de aguante")]
+    ReduceFeatCost,
+    /// Reduce el coste de bloquear
+    #[strum(serialize = "Glifo de bloqueo")]
+    Shielding,
+    /// Añade daño a tus ataques de aporreo
+    #[strum(serialize = "Glifo de percusión")]
+    Bashing,
+    /// Añade resistencia física
+    #[strum(serialize = "Glifo de resistencia al daño físico")]
+    DecreasePhysicalHarm,
+    /// Añade resistencia a los hechizos
+    #[strum(serialize = "Glifo de resistencia al daño mágico")]
+    DecreaseSpellHarm,
+    /// Añade resistencia a las llamas
+    #[strum(serialize = "Glifo de resistencia al fuego")]
+    FlameResist,
+    /// Añade resistencia a la escarcha
+    #[strum(serialize = "Glifo de resistencia a la congelación")]
+    FrostResist,
+    /// Añade resistencia a descargas eléctricas
+    #[strum(serialize = "Glifo de resistencia a las descargas")]
+    ShockResist,
+    /// Añade resistencia a venenos
+    #[strum(serialize = "Glifo de resistencia al veneno")]
+    PoisonResist,
+    /// Añade resistencia a enfermedades
+    #[strum(serialize = "Glifo de resistencia a las enfermedades")]
+    DiseaseResist,
+    /// Aumenta la duración de los efectos de las pociones
+    #[strum(serialize = "Glifo de amplificación alquímica")]
+    PotionResist,
+    /// Reduce la reutilización de las pociones
+    #[strum(serialize = "Glifo de aceleración alquímica")]
+    PotionBoost,
+    /// Reduce el coste de salud, magia y aguante de las habilidades
+    #[strum(serialize = "Glifo de reducción de coste de habilidades")]
+    ReduceSkillCost,
+    /// Añade recuperación de magia, salud y aguante
+    #[strum(serialize = "Glifo de regeneración prismática")]
+    PrismaticRecovery
 }
 
 pub struct Jewelry {
     pub kind: Jewelries,
     pub jewelry_trait: JewelryTraits,
-    pub enchantment: JewelryEnchantments
+    pub enchantment: Option<JewelryEnchantments>,
+    pub quality: GearQuality
 }
 
-impl TryFrom<String> for Jewelries {
-    type Error = String;
-
-    fn try_from(value: String) -> Result<Self, Self::Error> {
-        if value == Jewelries::Necklace.to_string() { Ok(Jewelries::Necklace) }
-        else if value == Jewelries::Ring.to_string() { Ok(Jewelries::Ring) }
-        else { Err(format!("{} is not a jewelry", value)) }
-    }
-}
-
-impl Display for Jewelries {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+impl MaterialCost for Jewelries {
+    fn cost(&self) -> Vec<(i32, String)> {
         match *self {
-            Jewelries::Necklace => write!(f, "Collar"),
-            Jewelries::Ring => write!(f, "Anillo"),
+            Jewelries::Necklace => vec![(150, PartMaterials::PlatinumOunces.to_string())],
+            Jewelries::Ring => vec![(100, PartMaterials::PlatinumOunces.to_string())]
         }
     }
 }
 
-impl Display for JewelryTraits {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+impl MaterialCost for JewelryTraits {
+    fn cost(&self) -> Vec<(i32, String)> {
         match *self {
-            JewelryTraits::Arcane => write!(f, "Arcanidad"),
-            JewelryTraits::Bloodthirsty => write!(f, "Sed de sangre"),
-            JewelryTraits::Harmony => write!(f, "Armonía"),
-            JewelryTraits::Healthy => write!(f, "Saludable"),
-            JewelryTraits::Infused => write!(f, "Imbuido"),
-            JewelryTraits::Protective => write!(f, "Protección"),
-            JewelryTraits::Robust => write!(f, "Robustez"),
-            JewelryTraits::Swift => write!(f, "Agilidad"),
-            JewelryTraits::Triune => write!(f, "Trinidad"),
+            JewelryTraits::Arcane => vec![(1, JewelryTraitMaterials::Cobalt.to_string())],
+            JewelryTraits::Bloodthirsty => vec![(1, JewelryTraitMaterials::Slaughterstone.to_string())],
+            JewelryTraits::Harmony => vec![(1, JewelryTraitMaterials::Dibellium.to_string())],
+            JewelryTraits::Healthy => vec![(1, JewelryTraitMaterials::Antimony.to_string())],
+            JewelryTraits::Infused => vec![(1, JewelryTraitMaterials::AurbicAmber.to_string())],
+            JewelryTraits::Protective => vec![(1, JewelryTraitMaterials::Titanium.to_string())],
+            JewelryTraits::Robust => vec![(1, JewelryTraitMaterials::Zinc.to_string())],
+            JewelryTraits::Swift => vec![(1, JewelryTraitMaterials::GildingWax.to_string())],
+            JewelryTraits::Triune => vec![(1, JewelryTraitMaterials::DawnPrism.to_string())],
         }
     }
 }
 
-impl ItemInfo for JewelryTraits {
-    fn description(&self) -> String {
+impl MaterialCost for JewelryEnchantments {
+    fn cost(&self) -> Vec<(i32, String)> {
         match *self {
-            JewelryTraits::Arcane => "Aumenta la magia máxima".to_string(),
-            JewelryTraits::Bloodthirsty => "Aumenta el daño en enemigos por debajo del 90%".to_string(),
-            JewelryTraits::Harmony => "Al activar una sinergia, restaura salud, magia y aguante".to_string(),
-            JewelryTraits::Healthy => "Aumenta la salud máxima".to_string(),
-            JewelryTraits::Infused => "Aumenta la eficacia del encantamiento de la joyería".to_string(),
-            JewelryTraits::Protective => "Aumenta la resistencia a hechizos y física".to_string(),
-            JewelryTraits::Robust => "Aumenta el aguante máximo".to_string(),
-            JewelryTraits::Swift => "Aumenta la velocidad de movimiento".to_string(),
-            JewelryTraits::Triune => "Aumenta la magia, aguante y salud máximas".to_string(),
+            JewelryEnchantments::IncreasePhysicalHarm => vec![(1, PotencyRunes::Repora.to_string()), (1, EssenceRunes::Taderi.to_string())],
+            JewelryEnchantments::IncreaseMagicalHarm => vec![(1, PotencyRunes::Repora.to_string()), (1, EssenceRunes::Makderi.to_string())],
+            JewelryEnchantments::HealthRecovery => vec![(1, PotencyRunes::Repora.to_string()), (1, EssenceRunes::Okoma.to_string())],
+            JewelryEnchantments::MagickaRecovery => vec![(1, PotencyRunes::Repora.to_string()), (1, EssenceRunes::Makkoma.to_string())],
+            JewelryEnchantments::StaminaRecovery => vec![(1, PotencyRunes::Repora.to_string()), (1, EssenceRunes::Denima.to_string())],
+            JewelryEnchantments::ReduceSpellCost => vec![(1, PotencyRunes::Itade.to_string()), (1, EssenceRunes::Makkoma.to_string())],
+            JewelryEnchantments::ReduceFeatCost => vec![(1, PotencyRunes::Itade.to_string()), (1, EssenceRunes::Denima.to_string())],
+            JewelryEnchantments::Shielding => vec![(1, PotencyRunes::Itade.to_string()), (1, EssenceRunes::Kaderi.to_string())],
+            JewelryEnchantments::Bashing => vec![(1, PotencyRunes::Repora.to_string()), (1, EssenceRunes::Kaderi.to_string())],
+            JewelryEnchantments::DecreasePhysicalHarm => vec![(1, PotencyRunes::Itade.to_string()), (1, EssenceRunes::Taderi.to_string())],
+            JewelryEnchantments::DecreaseSpellHarm => vec![(1, PotencyRunes::Itade.to_string()), (1, EssenceRunes::Makderi.to_string())],
+            JewelryEnchantments::FlameResist => vec![(1, PotencyRunes::Itade.to_string()), (1, EssenceRunes::Rakeipa.to_string())],
+            JewelryEnchantments::FrostResist => vec![(1, PotencyRunes::Itade.to_string()), (1, EssenceRunes::Dekeipa.to_string())],
+            JewelryEnchantments::ShockResist => vec![(1, PotencyRunes::Itade.to_string()), (1, EssenceRunes::Meip.to_string())],
+            JewelryEnchantments::PoisonResist => vec![(1, PotencyRunes::Itade.to_string()), (1, EssenceRunes::Kuoko.to_string())],
+            JewelryEnchantments::DiseaseResist => vec![(1, PotencyRunes::Itade.to_string()), (1, EssenceRunes::Haoko.to_string())],
+            JewelryEnchantments::PotionResist => vec![(1, PotencyRunes::Itade.to_string()), (1, EssenceRunes::Oru.to_string())],
+            JewelryEnchantments::PotionBoost => vec![(1, PotencyRunes::Repora.to_string()), (1, EssenceRunes::Oru.to_string())],
+            JewelryEnchantments::ReduceSkillCost => vec![(1, PotencyRunes::Itade.to_string()), (1, EssenceRunes::Indeko.to_string())],
+            JewelryEnchantments::PrismaticRecovery => vec![(1, PotencyRunes::Repora.to_string()), (1, EssenceRunes::Indeko.to_string())],
         }
     }
 }
 
-impl Display for JewelryEnchantments {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match *self {
-            JewelryEnchantments::IncreasePhysicalHarm => write!(f, "Glifo de aumento de daño físico"),
-            JewelryEnchantments::IncreaseMagicalHarm => write!(f, "Glifo de aumento de daño mágico"),
-            JewelryEnchantments::HealthRecovery => write!(f, "Glifo de regeneración de salud"),
-            JewelryEnchantments::MagickaRecovery => write!(f, "Glifo de regeneración de magia"),
-            JewelryEnchantments::StaminaRecovery => write!(f, "Glifo de regeneración de aguante"),
-            JewelryEnchantments::ReduceSpellCost => write!(f, "Glifo de reducción de coste de magia"),
-            JewelryEnchantments::ReduceFeatCost => write!(f, "Glifo de reducción de coste de aguante"),
-            JewelryEnchantments::Shielding => write!(f, "Glifo de bloqueo"),
-            JewelryEnchantments::Bashing => write!(f, "Glifo de percusión"),
-            JewelryEnchantments::DecreasePhysicalHarm => write!(f, "Glifo de resistencia al daño físico"),
-            JewelryEnchantments::DecreaseSpellHarm => write!(f, "Glifo de resistencia al daño mágico"),
-            JewelryEnchantments::FlameResist => write!(f, "Glifo de resistencia al fuego"),
-            JewelryEnchantments::FrostResist => write!(f, "Glifo de resistencia a la congelación"),
-            JewelryEnchantments::ShockResist => write!(f, "Glifo de resistencia a las descargas"),
-            JewelryEnchantments::PoisonResist => write!(f, "Glifo de resistencia al veneno"),
-            JewelryEnchantments::DiseaseResist => write!(f, "Glifo de resistencia a las enfermedades"),
-            JewelryEnchantments::PotionResist => write!(f, "Glifo de amplificación alquímica"),
-            JewelryEnchantments::PotionBoost => write!(f, "Glifo de aceleración alquímica"),
-            JewelryEnchantments::ReduceSkillCost => write!(f, "Glifo de reducción de coste de habilidades"),
-            JewelryEnchantments::PrismaticRecovery => write!(f, "Glifo de regeneración prismática"),
+impl MaterialCost for Jewelry {
+    fn cost(&self) -> Vec<(i32, String)> {
+        let mut vec = Vec::new();
+        vec.append(&mut self.kind.cost());
+        vec.append(&mut self.jewelry_trait.cost());
+        if let Some(e) = &self.enchantment {
+            vec.append(&mut e.cost());
         }
-    }
-}
-
-impl ItemInfo for JewelryEnchantments {
-    fn description(&self) -> String {
-        match *self {
-            JewelryEnchantments::IncreasePhysicalHarm => "Añade daño de arma y hechizo, y recuperación de aguante".to_string(),
-            JewelryEnchantments::IncreaseMagicalHarm => "Añade daño de arma y hechizo, y recuperación de magia".to_string(),
-            JewelryEnchantments::HealthRecovery => "Añade recuperación de salud".to_string(),
-            JewelryEnchantments::MagickaRecovery => "Añade recuperación de magia".to_string(),
-            JewelryEnchantments::StaminaRecovery => "Añade recuperación de aguante".to_string(),
-            JewelryEnchantments::ReduceSpellCost => "Reduce el coste de magia de las habilidades".to_string(),
-            JewelryEnchantments::ReduceFeatCost => "Reduce el coste de aguante de las habilidades".to_string(),
-            JewelryEnchantments::Shielding => "Reduce el coste de bloquear".to_string(),
-            JewelryEnchantments::Bashing => "Añade daño a tus ataques de aporreo".to_string(),
-            JewelryEnchantments::DecreasePhysicalHarm => "Añade resistencia física".to_string(),
-            JewelryEnchantments::DecreaseSpellHarm => "Añade resistencia a los hechizos".to_string(),
-            JewelryEnchantments::FlameResist => "Añade resistencia a las llamas".to_string(),
-            JewelryEnchantments::FrostResist => "Añade resistencia a la escarcha".to_string(),
-            JewelryEnchantments::ShockResist => "Añade resistencia a descargas eléctricas".to_string(),
-            JewelryEnchantments::PoisonResist => "Añade resistencia a venenos".to_string(),
-            JewelryEnchantments::DiseaseResist => "Añade resistencia a enfermedades".to_string(),
-            JewelryEnchantments::PotionResist => "Aumenta la duración de los efectos de las pociones".to_string(),
-            JewelryEnchantments::PotionBoost => "Reduce la reutilización de las pociones".to_string(),
-            JewelryEnchantments::ReduceSkillCost => "Reduce el coste de salud, magia y aguante de las habilidades".to_string(),
-            JewelryEnchantments::PrismaticRecovery => "Añade recuperación de magia, salud y aguante".to_string(),
-        }
+        vec.append(&mut get_enchantment_quality_cost(&self.quality));
+        vec.append(&mut match self.quality {
+            GearQuality::White => vec![],
+            GearQuality::Green => vec![(1, JewelryQualityMaterials::TernePlating.to_string())],
+            GearQuality::Blue => vec![(2, JewelryQualityMaterials::IridiumPlating.to_string())],
+            GearQuality::Purple => vec![(3, JewelryQualityMaterials::ZirconPlating.to_string())],
+            GearQuality::Yellow => vec![(4, JewelryQualityMaterials::ChromiumPlating.to_string())],
+        });
+        vec
     }
 }

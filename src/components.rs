@@ -1,22 +1,50 @@
 pub mod traits;
 pub mod enchantments;
 
+use std::collections::HashMap;
 use serenity::builder::{CreateActionRow, CreateEmbed, CreateInputText, CreateSelectMenu};
 use serenity::model::prelude::component::*;
 use serenity::model::prelude::*;
-use strum::IntoEnumIterator;
-use crate::entities::armour::{ArmourParts, ArmourWeights};
-use crate::entities::{GearQuality, ItemEmoji, ItemInfo};
-use crate::entities::jewelry::Jewelries;
-use crate::entities::weapon::{OneHandedWeapons, TwoHandedWeapons};
+use strum::{EnumMessage, EnumProperty, IntoEnumIterator};
+use crate::entities::armour::{Armour, ArmourParts, ArmourWeights};
+use crate::entities::{GearQuality, MaterialCost};
+use crate::entities::jewelry::{Jewelries, Jewelry};
+use crate::entities::weapon::{OneHandedWeapons, TwoHandedWeapons, Weapon};
+use std::string::ToString;
 
-#[derive(Debug)]
-pub struct SetPiece {
-    pub part: String,
-    pub part_trait: String,
-    pub weight: Option<String>,
-    pub quality: String,
-    pub enchantment: String
+pub enum SetPiece {
+    Weapon(Weapon),
+    Armour(Armour),
+    Jewelry(Jewelry)
+}
+
+impl MaterialCost for SetPiece {
+    fn cost(&self) -> Vec<(i32, String)> {
+        match self {
+            SetPiece::Weapon(w) => w.cost(),
+            SetPiece::Armour(a) => a.cost(),
+            SetPiece::Jewelry(j) => j.cost()
+        }
+    }
+}
+
+pub fn display_cost(pieces: &Vec<SetPiece>) -> CreateEmbed {
+    let mut b = CreateEmbed::default();
+    let mut costs: HashMap<String, i32> = HashMap::new();
+    for (amount, material) in pieces.iter()
+        .map(|p| p.cost())
+        .flatten()
+    {
+        if let Some(old_amount) = costs.insert(material.clone(), amount) {
+            costs.insert(material.clone(), amount + old_amount);
+        }
+    }
+    b.title("Materiales");
+    b.description("Lista de los materiales necesarios para este equipo asumiendo CP160");
+    for (material, amount) in costs {
+        b.field(material, amount, true);
+    }
+    b
 }
 
 pub fn gear_set_parts(name: &str) -> CreateSelectMenu {
@@ -33,19 +61,20 @@ pub fn gear_set_parts(name: &str) -> CreateSelectMenu {
         for jewelry in Jewelries::iter() {
             opts.create_option(|o| o
                 .label(jewelry.to_string())
-                .value(jewelry.to_string()));
+                .value(jewelry.to_string())
+                .description(jewelry.get_documentation().unwrap()));
         }
         for weapon in TwoHandedWeapons::iter() {
             opts.create_option(|o| o
                 .label(weapon.to_string())
                 .value(weapon.to_string())
-                .description(weapon.description()));
+                .description(weapon.get_documentation().unwrap()));
         }
         for weapon in OneHandedWeapons::iter() {
             opts.create_option(|o| o
                 .label(weapon.to_string())
                 .value(weapon.to_string())
-                .description(weapon.description()));
+                .description(weapon.get_documentation().unwrap()));
         }
         opts
     });
@@ -76,7 +105,7 @@ pub fn gear_quality(name: &str) -> CreateSelectMenu {
             opts.create_option(|o| o
                 .label(quality.to_string())
                 .value(quality.to_string())
-                .emoji(quality.emoji()));
+                .emoji(ReactionType::Unicode(quality.get_str("Emoji").unwrap().to_string())));
         }
         opts
     });
@@ -90,28 +119,108 @@ pub fn gear_set_embed(set: &str) -> CreateEmbed {
     b
 }
 
-pub fn gear_set_piece_embed(set: &str, part: &SetPiece) -> CreateEmbed {
+pub fn gear_set_piece_embed(set: &str, pieces: &Vec<SetPiece>) -> CreateEmbed {
     let mut b = CreateEmbed::default();
-    b.title(format!("⚒️ {}: {} ️", set, &part.part));
+    b.title(format!("🛠️ {} 🛠️️", set));
     b.color((127,255,0));
-    b.field(":hourglass: Rasgo", &part.part_trait, true);
-    if let Some(weight) = &part.weight {
-        b.field(":lifter: Peso", weight, true);
+    for piece in pieces {
+        match piece {
+            SetPiece::Weapon(w) => {
+                b.field(&w.kind.to_string(), "", false);
+                b.field(":hourglass: Rasgo", &w.weapon_trait.to_string(), true);
+                b.field(":gem: Calidad", &w.quality.to_string(), true);
+                if let Some(enchantment) = &w.enchantment {
+                    b.field(":magic_wand: Encantamiento", enchantment, false);
+                }
+            }
+            SetPiece::Armour(a) => {
+                b.field(&a.kind.to_string(), "", false);
+                b.color((127,255,0));
+                b.field(":lifter: Peso", &a.weight.to_string(), true);
+                b.field(":hourglass: Rasgo", &a.armour_trait.to_string(), true);
+                b.field(":gem: Calidad", &a.quality.to_string(), true);
+                if let Some(enchantment) = &a.enchantment {
+                    b.field(":magic_wand: Encantamiento", enchantment, false);
+                }
+            }
+            SetPiece::Jewelry(j) => {
+                b.field(&j.kind.to_string(), "", false);
+                b.color((127,255,0));
+                b.field(":hourglass: Rasgo", &j.jewelry_trait.to_string(), true);
+                b.field(":gem: Calidad", &j.quality.to_string(), true);
+                if let Some(enchantment) = &j.enchantment {
+                    b.field(":magic_wand: Encantamiento", enchantment, false);
+                }
+            }
+        }
     }
-    b.field(":gem: Calidad", &part.quality, true);
-    b.field(":magic_wand: Encantamiento", &part.enchantment, false);
     b
 }
 
 pub fn gear_piece_embed(part: &SetPiece) -> CreateEmbed {
     let mut b = CreateEmbed::default();
-    b.title(format!("🛠️ {} 🛠️", &part.part));
-    b.field("Rasgo", &part.part_trait, true);
-    if let Some(weight) = &part.weight {
-        b.field("Peso", weight, true);
+    match part {
+        SetPiece::Weapon(w) => {
+            b.title(format!("🛠️ {} 🛠️️", &w.kind.to_string()));
+            b.field("Rasgo", &w.weapon_trait.to_string(), true);
+            b.field("Calidad", &w.quality.to_string(), true);
+            if let Some(enchantment) = &w.enchantment {
+                b.field("Encantamiento", enchantment, true);
+            }
+        }
+        SetPiece::Armour(a) => {
+            b.title(format!("🛠️ {} 🛠️", &a.kind.to_string()));
+            b.field("Peso", &a.weight.to_string(), true);
+            b.field("Rasgo", &a.armour_trait.to_string(), true);
+            b.field("Calidad", &a.quality.to_string(), true);
+            if let Some(enchantment) = &a.enchantment {
+                b.field("Encantamiento", enchantment, true);
+            }
+        }
+        SetPiece::Jewelry(j) => {
+            b.title(format!("🛠️ {} 🛠️️", &j.kind.to_string()));
+            b.field("Rasgo", &j.jewelry_trait.to_string(), true);
+            b.field("Calidad", &j.quality.to_string(), true);
+            if let Some(enchantment) = &j.enchantment {
+                b.field("Encantamiento", enchantment, true);
+            }
+        }
     }
-    b.field("Calidad", &part.quality, true);
-    b.field("Encantamiento", &part.enchantment, true);
+    b
+}
+
+pub fn gear_result_embed(set: &Vec<SetPiece>, name: &str) -> CreateEmbed {
+    let mut b = CreateEmbed::default();
+    b.title(format!("🛠️ {} 🛠️️", name));
+    for piece in set {
+        match piece {
+            SetPiece::Weapon(w) => {
+                b.field(&w.kind, "", false);
+                b.field("Rasgo", &w.weapon_trait.to_string(), true);
+                b.field("Calidad", &w.quality.to_string(), true);
+                if let Some(enchantment) = &w.enchantment {
+                    b.field("Encantamiento", enchantment, true);
+                }
+            }
+            SetPiece::Armour(a) => {
+                b.field(&a.kind, "", false);
+                b.field("Peso", &a.weight.to_string(), true);
+                b.field("Rasgo", &a.armour_trait.to_string(), true);
+                b.field("Calidad", &a.quality.to_string(), true);
+                if let Some(enchantment) = &a.enchantment {
+                    b.field("Encantamiento", enchantment, true);
+                }
+            }
+            SetPiece::Jewelry(j) => {
+                b.field(&j.kind, "", false);
+                b.field("Rasgo", &j.jewelry_trait.to_string(), true);
+                b.field("Calidad", &j.quality.to_string(), true);
+                if let Some(enchantment) = &j.enchantment {
+                    b.field("Encantamiento", enchantment, true);
+                }
+            }
+        }
+    }
     b
 }
 
@@ -151,7 +260,7 @@ De cara a solicitar un crafting a los {} en el siguiente canal se deberá rellen
 - **Consumibles:** Para 🍖 comida y 🧪 pociones.
 - **Encantamientos:** Para los distintos glifos de armas, armadura y joyeria.
 
-Se deberan enviar los materiales al fabricante que se encargue y abonar el pago al banco del gremio de __**{}**__ de oro por pieza, __**{}**__ de oro por set",
+Se deberan enviar los materiales al fabricante que se encargue y, __**en caso de tener nivel CP300+ y solo en los encargos de equipamiento**__, abonar el pago al banco del gremio de __**{}**__ de oro por pieza, __**{}**__ de oro por set",
         Mention::Role(crafters.id), price, *price * 5.0)
 }
 
