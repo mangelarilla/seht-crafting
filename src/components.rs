@@ -255,7 +255,7 @@ pub fn menu_description(price: &f64, crafters: &Role) -> String {
     format!(
         "⚒️ __**Solicitud de crafting de equipamiento, consumibles o encantamientos**__ ⚒️
 
-De cara a solicitar un crafting a los {} en el siguiente canal se deberá rellenar mediantes los tres botones que aparecen al final de este mensaje, vease:
+De cara a solicitar un crafting a los {} en el siguiente canal se deberá rellenar mediante los tres botones que aparecen al final de este mensaje, vease:
 - **Equipamiento:** Para solicitar diversas piezas de set, incluyendo armas, armaduras y joyeria.
 - **Consumibles:** Para 🍖 comida y 🧪 pociones.
 - **Encantamientos:** Para los distintos glifos de armas, armadura y joyeria.
