@@ -174,14 +174,23 @@ impl MaterialCost for Jewelry {
         vec.append(&mut self.jewelry_trait.cost());
         if let Some(e) = &self.enchantment {
             vec.append(&mut e.cost());
+            vec.append(&mut get_enchantment_quality_cost(&self.quality));
         }
-        vec.append(&mut get_enchantment_quality_cost(&self.quality));
         vec.append(&mut match self.quality {
             GearQuality::White => vec![],
             GearQuality::Green => vec![(1, JewelryQualityMaterials::TernePlating.to_string())],
-            GearQuality::Blue => vec![(2, JewelryQualityMaterials::IridiumPlating.to_string())],
-            GearQuality::Purple => vec![(3, JewelryQualityMaterials::ZirconPlating.to_string())],
-            GearQuality::Yellow => vec![(4, JewelryQualityMaterials::ChromiumPlating.to_string())],
+            GearQuality::Blue => vec![
+                (1, JewelryQualityMaterials::TernePlating.to_string()),
+                (2, JewelryQualityMaterials::IridiumPlating.to_string())],
+            GearQuality::Purple => vec![
+                (1, JewelryQualityMaterials::TernePlating.to_string()),
+                (2, JewelryQualityMaterials::IridiumPlating.to_string()),
+                (3, JewelryQualityMaterials::ZirconPlating.to_string())],
+            GearQuality::Yellow => vec![
+                (1, JewelryQualityMaterials::TernePlating.to_string()),
+                (2, JewelryQualityMaterials::IridiumPlating.to_string()),
+                (3, JewelryQualityMaterials::ZirconPlating.to_string()),
+                (4, JewelryQualityMaterials::ChromiumPlating.to_string())],
         });
         vec
     }

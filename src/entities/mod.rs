@@ -2,7 +2,7 @@ use std::fmt::{Display, Formatter};
 use strum_macros::{Display, EnumIter, EnumProperty, EnumString};
 use crate::entities::armour::ArmourParts;
 use crate::entities::jewelry::Jewelries;
-use crate::entities::materials::RuneQualityMaterials;
+use crate::entities::materials::{BlacksmithQualityMaterials, RuneQualityMaterials, TailoringQualityMaterials, WoodworkingQualityMaterials};
 use crate::entities::weapon::{WeaponKind};
 
 pub mod armour;
@@ -47,6 +47,78 @@ fn get_enchantment_quality_cost(quality: &GearQuality) -> Vec<(i32, String)> {
         GearQuality::Blue => vec![(1, RuneQualityMaterials::Denata.to_string())],
         GearQuality::Purple => vec![(1, RuneQualityMaterials::Rekuta.to_string())],
         GearQuality::Yellow => vec![(1, RuneQualityMaterials::Kuta.to_string())],
+    }
+}
+
+fn get_blacksmith_quality_cost(quality: &GearQuality) -> Vec<(i32, String)> {
+    match quality {
+        GearQuality::White => vec![],
+        GearQuality::Green => vec![
+            (2, BlacksmithQualityMaterials::HoningStone.to_string()),
+        ],
+        GearQuality::Blue => vec![
+            (2, BlacksmithQualityMaterials::HoningStone.to_string()),
+            (3, BlacksmithQualityMaterials::DwarvenOil.to_string()),
+        ],
+        GearQuality::Purple => vec![
+            (2, BlacksmithQualityMaterials::HoningStone.to_string()),
+            (3, BlacksmithQualityMaterials::DwarvenOil.to_string()),
+            (4, BlacksmithQualityMaterials::GrainSolvent.to_string()),
+        ],
+        GearQuality::Yellow => vec![
+            (2, BlacksmithQualityMaterials::HoningStone.to_string()),
+            (3, BlacksmithQualityMaterials::DwarvenOil.to_string()),
+            (4, BlacksmithQualityMaterials::GrainSolvent.to_string()),
+            (8, BlacksmithQualityMaterials::TemperingAlloy.to_string())
+        ],
+    }
+}
+
+fn get_tailoring_quality_cost(quality: &GearQuality) -> Vec<(i32, String)> {
+    match quality {
+        GearQuality::White => vec![],
+        GearQuality::Green => vec![
+            (2, TailoringQualityMaterials::Hemming.to_string()),
+        ],
+        GearQuality::Blue => vec![
+            (2, TailoringQualityMaterials::Hemming.to_string()),
+            (3, TailoringQualityMaterials::Embroidery.to_string()),
+        ],
+        GearQuality::Purple => vec![
+            (2, TailoringQualityMaterials::Hemming.to_string()),
+            (3, TailoringQualityMaterials::Embroidery.to_string()),
+            (4, TailoringQualityMaterials::ElegantLining.to_string()),
+        ],
+        GearQuality::Yellow => vec![
+            (2, TailoringQualityMaterials::Hemming.to_string()),
+            (3, TailoringQualityMaterials::Embroidery.to_string()),
+            (4, TailoringQualityMaterials::ElegantLining.to_string()),
+            (8, TailoringQualityMaterials::DreughWax.to_string())
+        ]
+    }
+}
+
+fn get_woodworking_quality_cost(quality: &GearQuality) -> Vec<(i32, String)> {
+    match quality {
+        GearQuality::White => vec![],
+        GearQuality::Green => vec![
+            (2, WoodworkingQualityMaterials::Pitch.to_string()),
+        ],
+        GearQuality::Blue => vec![
+            (2, WoodworkingQualityMaterials::Pitch.to_string()),
+            (3, WoodworkingQualityMaterials::Turpen.to_string()),
+        ],
+        GearQuality::Purple => vec![
+            (2, WoodworkingQualityMaterials::Pitch.to_string()),
+            (3, WoodworkingQualityMaterials::Turpen.to_string()),
+            (4, WoodworkingQualityMaterials::Mastic.to_string()),
+        ],
+        GearQuality::Yellow => vec![
+            (2, WoodworkingQualityMaterials::Pitch.to_string()),
+            (3, WoodworkingQualityMaterials::Turpen.to_string()),
+            (4, WoodworkingQualityMaterials::Mastic.to_string()),
+            (8, WoodworkingQualityMaterials::Rosin.to_string())
+        ],
     }
 }
 

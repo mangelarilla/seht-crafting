@@ -1,8 +1,8 @@
 use std::fmt::{Display, Formatter};
 use strum_macros::{Display, EnumIter, EnumMessage, EnumString};
 use std::string::ToString;
-use crate::entities::{GearQuality, get_enchantment_quality_cost, MaterialCost};
-use crate::entities::materials::{BlacksmithQualityMaterials, EssenceRunes, PartMaterials, PotencyRunes, WeaponTraitMaterials, WoodworkingQualityMaterials};
+use crate::entities::{GearQuality, get_blacksmith_quality_cost, get_enchantment_quality_cost, get_woodworking_quality_cost, MaterialCost};
+use crate::entities::materials::{EssenceRunes, PartMaterials, PotencyRunes, WeaponTraitMaterials};
 
 #[derive(Clone, EnumIter, Ord, PartialOrd, Eq, PartialEq, Display, EnumString, EnumMessage)]
 pub enum OneHandedWeapons {
@@ -229,35 +229,11 @@ impl MaterialCost for WeaponEnchantments {
 }
 
 fn get_quality_mats(weapon: &WeaponKind, quality: &GearQuality) -> Vec<(i32, String)> {
-    match quality {
-        GearQuality::White => vec![],
-        GearQuality::Green => match weapon {
-            WeaponKind::OneHanded(_) => vec![(2, BlacksmithQualityMaterials::HoningStone.to_string())],
-            WeaponKind::TwoHanded(w) => match w {
-                TwoHandedWeapons::Mace | TwoHandedWeapons::Sword | TwoHandedWeapons::Axe => vec![(2, BlacksmithQualityMaterials::HoningStone.to_string())],
-                _ => vec![(2, WoodworkingQualityMaterials::Pitch.to_string())],
-            }
-        }
-        GearQuality::Blue => match weapon {
-            WeaponKind::OneHanded(_) => vec![(3, BlacksmithQualityMaterials::DwarvenOil.to_string())],
-            WeaponKind::TwoHanded(w) => match w {
-                TwoHandedWeapons::Mace | TwoHandedWeapons::Sword | TwoHandedWeapons::Axe => vec![(3, BlacksmithQualityMaterials::DwarvenOil.to_string())],
-                _ => vec![(3, WoodworkingQualityMaterials::Turpen.to_string())],
-            }
-        }
-        GearQuality::Purple => match weapon {
-            WeaponKind::OneHanded(_) => vec![(4, BlacksmithQualityMaterials::GrainSolvent.to_string())],
-            WeaponKind::TwoHanded(w) => match w {
-                TwoHandedWeapons::Mace | TwoHandedWeapons::Sword | TwoHandedWeapons::Axe => vec![(4, BlacksmithQualityMaterials::GrainSolvent.to_string())],
-                _ => vec![(4, WoodworkingQualityMaterials::Mastic.to_string())],
-            }
-        }
-        GearQuality::Yellow => match weapon {
-            WeaponKind::OneHanded(_) => vec![(8, BlacksmithQualityMaterials::TemperingAlloy.to_string())],
-            WeaponKind::TwoHanded(w) => match w {
-                TwoHandedWeapons::Mace | TwoHandedWeapons::Sword | TwoHandedWeapons::Axe => vec![(8, BlacksmithQualityMaterials::TemperingAlloy.to_string())],
-                _ => vec![(8, WoodworkingQualityMaterials::Rosin.to_string())],
-            }
+    match weapon {
+        WeaponKind::OneHanded(_) => get_blacksmith_quality_cost(quality),
+        WeaponKind::TwoHanded(w) => match w {
+            TwoHandedWeapons::Mace | TwoHandedWeapons::Sword | TwoHandedWeapons::Axe => get_blacksmith_quality_cost(quality),
+            _ => get_woodworking_quality_cost(quality)
         }
     }
 }
@@ -269,8 +245,8 @@ impl MaterialCost for Weapon {
         vec.append(&mut self.weapon_trait.cost());
         if let Some(e) = &self.enchantment {
             vec.append(&mut e.cost());
+            vec.append(&mut get_enchantment_quality_cost(&self.quality));
         }
-        vec.append(&mut get_enchantment_quality_cost(&self.quality));
         vec.append(&mut get_quality_mats(&self.kind, &self.quality));
         vec
     }

@@ -1,7 +1,7 @@
 use strum_macros::{Display, EnumIter, EnumMessage, EnumString};
 use std::string::ToString;
-use crate::entities::{GearQuality, get_enchantment_quality_cost, MaterialCost};
-use crate::entities::materials::{ArmourTraitMaterials, BlacksmithQualityMaterials, EssenceRunes, PartMaterials, PotencyRunes, TailoringQualityMaterials};
+use crate::entities::{GearQuality, get_blacksmith_quality_cost, get_enchantment_quality_cost, get_tailoring_quality_cost, get_woodworking_quality_cost, MaterialCost};
+use crate::entities::materials::{ArmourTraitMaterials, EssenceRunes, PartMaterials, PotencyRunes};
 
 #[derive(Clone, EnumIter, Ord, PartialOrd, Eq, PartialEq, Display, EnumString)]
 pub enum ArmourParts {
@@ -116,24 +116,9 @@ impl MaterialCost for ArmourEnchantments {
 }
 
 fn get_quality_mats(weight: &ArmourWeights, quality: &GearQuality) -> Vec<(i32, String)> {
-    match quality {
-        GearQuality::White => vec![],
-        GearQuality::Green => match weight {
-            ArmourWeights::Heavy => vec![(2, BlacksmithQualityMaterials::HoningStone.to_string())],
-            _ => vec![(2, TailoringQualityMaterials::Hemming.to_string())]
-        }
-        GearQuality::Blue => match weight {
-            ArmourWeights::Heavy => vec![(3, BlacksmithQualityMaterials::DwarvenOil.to_string())],
-            _ => vec![(3, TailoringQualityMaterials::Embroidery.to_string())]
-        }
-        GearQuality::Purple => match weight {
-            ArmourWeights::Heavy => vec![(4, BlacksmithQualityMaterials::GrainSolvent.to_string())],
-            _ => vec![(4, TailoringQualityMaterials::ElegantLining.to_string())]
-        }
-        GearQuality::Yellow => match weight {
-            ArmourWeights::Heavy => vec![(8, BlacksmithQualityMaterials::TemperingAlloy.to_string())],
-            _ => vec![(8, TailoringQualityMaterials::DreughWax.to_string())]
-        }
+    match weight {
+        ArmourWeights::Heavy => get_blacksmith_quality_cost(quality),
+        _ => get_tailoring_quality_cost(quality)
     }
 }
 
@@ -165,9 +150,13 @@ impl MaterialCost for Armour {
         vec.append(&mut self.armour_trait.cost());
         if let Some(e) = &self.enchantment {
             vec.append(&mut e.cost());
+            vec.append(&mut get_enchantment_quality_cost(&self.quality));
         }
-        vec.append(&mut get_enchantment_quality_cost(&self.quality));
-        vec.append(&mut get_quality_mats(&self.weight, &self.quality));
+        if &self.kind == &ArmourParts::Shield {
+            vec.append(&mut get_woodworking_quality_cost(&self.quality));
+        } else {
+            vec.append(&mut get_quality_mats(&self.weight, &self.quality));
+        }
         vec
     }
 }
