@@ -2,11 +2,11 @@ use strum_macros::{Display, EnumString};
 
 #[derive(EnumString, Display)]
 pub enum PartMaterials {
-    #[strum(serialize = "Seda ancestral")] AncestorSilk,
-    #[strum(serialize = "Cuero rubedo")] RubedoLeather,
-    #[strum(serialize = "Lingote de rubedita")] RubediteIngots,
-    #[strum(serialize = "Madera de fresno rubí lijado")] SandedRubyAsh,
-    #[strum(serialize = "Onza de platino")] PlatinumOunces
+    #[strum(serialize = "Seda ancestral (Ancestor Silk)")] AncestorSilk,
+    #[strum(serialize = "Cuero rubedo (Rubedo Leather)")] RubedoLeather,
+    #[strum(serialize = "Lingote de rubedita (Rubedite Ingots)")] RubediteIngots,
+    #[strum(serialize = "Madera de fresno rubí lijado (Sanded Ruby Ash)")] SandedRubyAsh,
+    #[strum(serialize = "Onza de platino (Platinum Ounces)")] PlatinumOunces
 }
 
 #[derive(EnumString, Display)]
@@ -16,73 +16,73 @@ pub enum RuneQualityMaterials {
 
 #[derive(EnumString, Display)]
 pub enum TailoringQualityMaterials {
-    #[strum(serialize = "Hilo de coser")] Hemming,
-    #[strum(serialize = "Bordado")] Embroidery,
-    #[strum(serialize = "Revestimiento elegante")] ElegantLining,
-    #[strum(serialize = "Cera de dreugh")] DreughWax
+    #[strum(serialize = "Hilo de coser (Hemming)")] Hemming,
+    #[strum(serialize = "Bordado (Embroidery)")] Embroidery,
+    #[strum(serialize = "Revestimiento elegante (Elegant Lining)")] ElegantLining,
+    #[strum(serialize = "Cera de dreugh (Dreugh Wax)")] DreughWax
 }
 
 #[derive(EnumString, Display)]
 pub enum BlacksmithQualityMaterials {
-    #[strum(serialize = "Piedra de esmeril")] HoningStone,
-    #[strum(serialize = "Aceite enano")] DwarvenOil,
-    #[strum(serialize = "Disolvente granulado")] GrainSolvent,
-    #[strum(serialize = "Aleación de temple")] TemperingAlloy
+    #[strum(serialize = "Piedra de esmeril (Honing Stone)")] HoningStone,
+    #[strum(serialize = "Aceite enano (Dwarven Oil)")] DwarvenOil,
+    #[strum(serialize = "Disolvente granulado (Grain Solvent)")] GrainSolvent,
+    #[strum(serialize = "Aleación de temple (Tempering Alloy)")] TemperingAlloy
 }
 
 #[derive(EnumString, Display)]
 pub enum WoodworkingQualityMaterials {
-    #[strum(serialize = "Brea")] Pitch,
+    #[strum(serialize = "Brea (Pitch)")] Pitch,
     #[strum(serialize = "Turpen")] Turpen,
-    #[strum(serialize = "Masilla")] Mastic,
-    #[strum(serialize = "Colofonia")] Rosin
+    #[strum(serialize = "Masilla (Mastic)")] Mastic,
+    #[strum(serialize = "Colofonia (Rosin)")] Rosin
 }
 
 #[derive(EnumString, Display)]
 pub enum JewelryQualityMaterials {
-    #[strum(serialize = "Chapado de terne")] TernePlating,
-    #[strum(serialize = "Chapado de iridio")] IridiumPlating,
-    #[strum(serialize = "Chapado de circón")] ZirconPlating,
-    #[strum(serialize = "Chapado de cromo")] ChromiumPlating
+    #[strum(serialize = "Chapado de terne (Terne Plating)")] TernePlating,
+    #[strum(serialize = "Chapado de iridio (Iridium Plating)")] IridiumPlating,
+    #[strum(serialize = "Chapado de circón (Zircon Plating)")] ZirconPlating,
+    #[strum(serialize = "Chapado de cromo (Chromium Plating)")] ChromiumPlating
 }
 
 #[derive(EnumString, Display)]
 pub enum ArmourTraitMaterials {
-    #[strum(serialize = "Zafiro")] Sapphire,
-    #[strum(serialize = "Diamante")] Diamond,
-    #[strum(serialize = "Piedra de sangre")] Bloodstone,
-    #[strum(serialize = "Granate")] Garnet,
-    #[strum(serialize = "Nirncrux fortificado")] FortifiedNirncrux,
-    #[strum(serialize = "Sardónice")] Sardonyx,
-    #[strum(serialize = "Cuarzo")] Quartz,
-    #[strum(serialize = "Esmeralda")] Emerald,
-    #[strum(serialize = "Almandino")] Almandine
+    #[strum(serialize = "Zafiro (Sapphire)")] Sapphire,
+    #[strum(serialize = "Diamante (Diamond)")] Diamond,
+    #[strum(serialize = "Piedra de sangre (Bloodstone)")] Bloodstone,
+    #[strum(serialize = "Granate (Garnet)")] Garnet,
+    #[strum(serialize = "Nirncrux fortificado (Fortified Nirncrux)")] FortifiedNirncrux,
+    #[strum(serialize = "Sardónice (Sardonyx)")] Sardonyx,
+    #[strum(serialize = "Cuarzo (Quartz)")] Quartz,
+    #[strum(serialize = "Esmeralda (Emerald)")] Emerald,
+    #[strum(serialize = "Almandino (Almandine)")] Almandine
 }
 
 #[derive(EnumString, Display)]
 pub enum WeaponTraitMaterials {
-    #[strum(serialize = "Amatista")] Amethyst,
-    #[strum(serialize = "Citrina")] Citrine,
-    #[strum(serialize = "Turquesa")] Turquoise,
+    #[strum(serialize = "Amatista (Amethyst)")] Amethyst,
+    #[strum(serialize = "Citrina (Citrine)")] Citrine,
+    #[strum(serialize = "Turquesa (Turquoise)")] Turquoise,
     Jade,
-    #[strum(serialize = "Temple de Nirn")] PotentNirncrux,
-    #[strum(serialize = "Crisolita")] Chysolite,
-    #[strum(serialize = "Rubí")] Ruby,
-    #[strum(serialize = "Ópalo de fuego")] FireOpal,
-    #[strum(serialize = "Cornalina")] Carnelian
+    #[strum(serialize = "Temple de Nirn (Potent Nirncrux)")] PotentNirncrux,
+    #[strum(serialize = "Crisolita (Chysolite)")] Chysolite,
+    #[strum(serialize = "Rubí (Ruby)")] Ruby,
+    #[strum(serialize = "Ópalo de fuego (Fire Opal)")] FireOpal,
+    #[strum(serialize = "Cornalina (Carnelian)")] Carnelian
 }
 
 #[derive(EnumString, Display)]
 pub enum JewelryTraitMaterials {
-    #[strum(serialize = "Cobalto")] Cobalt,
-    #[strum(serialize = "Piedra masacre")] Slaughterstone,
-    #[strum(serialize = "Dibelio")] Dibellium,
-    #[strum(serialize = "Antimonio")] Antimony,
-    #[strum(serialize = "Ámbar aúrbico")] AurbicAmber,
-    #[strum(serialize = "Titanio")] Titanium,
-    #[strum(serialize = "Cinc")] Zinc,
-    #[strum(serialize = "Cera dorada")] GildingWax,
-    #[strum(serialize = "Prisma del alba")] DawnPrism
+    #[strum(serialize = "Cobalto (Cobalt)")] Cobalt,
+    #[strum(serialize = "Piedra masacre (Slaughterstone)")] Slaughterstone,
+    #[strum(serialize = "Dibelio (Dibellium)")] Dibellium,
+    #[strum(serialize = "Antimonio (Antimony)")] Antimony,
+    #[strum(serialize = "Ámbar aúrbico (AurbicAmber)")] AurbicAmber,
+    #[strum(serialize = "Titanio (Titanium)")] Titanium,
+    #[strum(serialize = "Cinc (Zinc)")] Zinc,
+    #[strum(serialize = "Cera dorada (Gilding Wax)")] GildingWax,
+    #[strum(serialize = "Prisma del alba (Dawn Prism)")] DawnPrism
 }
 
 #[derive(EnumString, Display)]
