@@ -28,6 +28,39 @@ impl MaterialCost for SetPiece {
     }
 }
 
+trait ResearchCost {
+    fn research_cost(&self) -> Vec<(i32, String)>;
+}
+
+impl ResearchCost for SetPiece {
+    fn research_cost(&self) -> Vec<(i32, String)> {
+        match self {
+            SetPiece::Weapon(w) => w.weapon_trait.cost(),
+            SetPiece::Armour(a) => a.armour_trait.cost(),
+            SetPiece::Jewelry(j) => j.jewelry_trait.cost()
+        }
+    }
+}
+
+pub fn display_research_cost(pieces: &Vec<SetPiece>) -> CreateEmbed {
+    let mut b = CreateEmbed::default();
+    let mut costs: HashMap<String, i32> = HashMap::new();
+    for (amount, material) in pieces.iter()
+        .map(|p| p.research_cost())
+        .flatten()
+    {
+        if let Some(old_amount) = costs.insert(material.clone(), amount) {
+            costs.insert(material.clone(), amount + old_amount);
+        }
+    }
+    b.title("Materiales");
+    b.description("Lista de los materiales de investigación necesarios para este equipo");
+    for (material, amount) in costs {
+        b.field(material, amount, true);
+    }
+    b
+}
+
 pub fn display_cost(pieces: &Vec<SetPiece>) -> CreateEmbed {
     let mut b = CreateEmbed::default();
     let mut costs: HashMap<String, i32> = HashMap::new();
@@ -118,6 +151,33 @@ pub fn gear_set_embed(set: &str) -> CreateEmbed {
     b.description("Configura el equipo que deseas con las opciones");
     b
 }
+
+pub fn gear_research_piece_embed(pieces: &Vec<SetPiece>) -> CreateEmbed {
+    let mut b = CreateEmbed::default();
+    b.title("🛠️ Investigación 🛠️️");
+    b.color((127,255,0));
+    for piece in pieces {
+        match piece {
+            SetPiece::Weapon(w) => {
+                b.field(&w.kind.to_string(), "", false);
+                b.field(":hourglass: Rasgo", &w.weapon_trait.to_string(), true);
+            }
+            SetPiece::Armour(a) => {
+                b.field(&a.kind.to_string(), "", false);
+                b.color((127,255,0));
+                b.field(":lifter: Peso", &a.weight.to_string(), true);
+                b.field(":hourglass: Rasgo", &a.armour_trait.to_string(), true);
+            }
+            SetPiece::Jewelry(j) => {
+                b.field(&j.kind.to_string(), "", false);
+                b.color((127,255,0));
+                b.field(":hourglass: Rasgo", &j.jewelry_trait.to_string(), true);
+            }
+        }
+    }
+    b
+}
+
 
 pub fn gear_set_piece_embed(set: &str, pieces: &Vec<SetPiece>) -> CreateEmbed {
     let mut b = CreateEmbed::default();
@@ -290,7 +350,7 @@ pub fn menu_action_row() -> CreateActionRow {
         .style(ButtonStyle::Primary));
     b.create_button(|b| b
         .custom_id("Consumables")
-        .emoji(ReactionType::Unicode("🍖".to_string()))
+        .emoji(ReactionType::Custom {name: Some("potion".to_string()), id: EmojiId(1138123617482322031), animated: false})
         .label("Consumibles")
         .style(ButtonStyle::Success));
     b.create_button(|b| b
@@ -298,5 +358,10 @@ pub fn menu_action_row() -> CreateActionRow {
         .emoji(ReactionType::Unicode("🪄".to_string()))
         .label("Encantamientos")
         .style(ButtonStyle::Secondary));
+    b.create_button(|b| b
+        .custom_id("GearResearch")
+        .emoji(ReactionType::Unicode("🔬".to_string()))
+        .label("Investigar Rasgos")
+        .style(ButtonStyle::Primary));
     b
 }

@@ -52,6 +52,18 @@ impl EventHandler for Bot {
             Interaction::ApplicationCommand(command) => {
                 info!("Received command interaction: {}", command.data.name);
 
+                if let Some(member) = &command.member {
+                    if !member.permissions.unwrap().administrator() {
+                        command.create_interaction_response(&ctx.http, |r| r
+                            .kind(InteractionResponseType::ChannelMessageWithSource)
+                            .interaction_response_data(|m| m
+                                .ephemeral(true)
+                                .content("Solo los administradoes pueden usar este comando")
+                            )
+                        ).await.unwrap();
+                    }
+                }
+
                 let menu_price = command.data.options.get(0)
                     .expect("Expected price").resolved.as_ref()
                     .expect("Expected price");
@@ -86,6 +98,7 @@ impl EventHandler for Bot {
                 info!("Received message component interaction: {}", component.data.custom_id);
                 match component.data.custom_id.as_str() {
                     "Gear" => requests::gear::gear(component, &ctx).await,
+                    "GearResearch" => requests::gear::gear_research(component, &ctx).await,
                     "Consumables" => requests::consumable::consumables(component, &ctx).await,
                     "Enchantment" => requests::enchantment::enchantment(component, &ctx).await,
                     _ => info!("interaction {} not registered", component.data.custom_id)

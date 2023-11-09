@@ -36,6 +36,31 @@ pub async fn gear(interaction: MessageComponentInteraction, ctx: &Context) {
     }
 }
 
+pub async fn gear_research(interaction: MessageComponentInteraction, ctx: &Context) {
+    if let Err(why) = interaction.create_interaction_response(&ctx.http, |response| response
+        .kind(InteractionResponseType::DeferredUpdateMessage)
+    ).await {
+        info!("Cannot respond to gear request: {}", why)
+    } else {
+        let parts = select_gear_research_options(&interaction.user, ctx).await;
+        let re = Regex::new(r"<@&\d+>").unwrap();
+        let msg = &interaction.message;
+        let role = re.captures(&msg.content).unwrap()
+            .get(0).unwrap().as_str();
+        let material_cost = components::display_research_cost(&parts);
+        if confirm_set("Investigar", &parts, &interaction.user, ctx).await {
+            interaction.channel_id.send_message(&ctx.http, |m| {
+                m.content(format!("{}\n\n__**‼️Peticion de Investigación para {}‼️**__\n\n", role,
+                                  Mention::User(interaction.user.id)));
+                let mut embeds = vec![components::gear_research_piece_embed(&parts)];
+                embeds.push(material_cost);
+                m.set_embeds(embeds);
+                m
+            }).await.unwrap();
+        }
+    }
+}
+
 pub async fn gear_modal(interaction: ModalSubmitInteraction, ctx: &Context) {
     if let Err(why) = interaction.create_interaction_response(&ctx.http, |response| response
         .kind(InteractionResponseType::DeferredUpdateMessage)
@@ -90,19 +115,23 @@ async fn confirm_set(name: &str, set: &Vec<SetPiece>, user: &User, ctx: &Context
     interaction.data.custom_id == "confirm_set"
 }
 
+async fn select_gear_research_options(user: &User, ctx: &Context) -> Vec<SetPiece> {
+    let selected_parts = select_parts("Investigar", user, ctx).await;
+
+    let (weapons, armour, jewelry) = parse_gear_parts(selected_parts);
+
+    let mut set_parts: Vec<SetPiece> = Vec::new();
+    set_parts.append(&mut process_weapons_research(weapons, user, ctx).await);
+    set_parts.append(&mut process_armour_research(armour, user, ctx).await);
+    set_parts.append(&mut process_jewelry_research(jewelry, user, ctx).await);
+    set_parts
+}
+
 async fn select_gear_set_options(set: &str, user: &User, ctx: &Context) -> Vec<SetPiece> {
     info!("Gear set: {}", set);
     let selected_parts = select_parts(set, user, ctx).await;
 
-    let weapons: Vec<WeaponKind> = selected_parts.iter()
-        .filter_map(|g| if let Gear::Weapon(w) = g {Some(w.clone())} else {None})
-        .collect();
-    let armour: Vec<ArmourParts> = selected_parts.iter()
-        .filter_map(|g| if let Gear::Armour(a) = g {Some(a.clone())} else {None})
-        .collect();
-    let jewelry: Vec<Jewelries> = selected_parts.iter()
-        .filter_map(|g| if let Gear::Jewelry(j) = g {Some(j.clone())} else {None})
-        .collect();
+    let (weapons, armour, jewelry) = parse_gear_parts(selected_parts);
 
     let with_enchantments = confirm_dialog("Quieres tambien encantamientos para el set?", user, ctx).await;
     let mut set_parts: Vec<SetPiece> = Vec::new();
@@ -112,6 +141,31 @@ async fn select_gear_set_options(set: &str, user: &User, ctx: &Context) -> Vec<S
     set_parts
 }
 
+fn parse_gear_parts(parts: Vec<Gear>) -> (Vec<WeaponKind>, Vec<ArmourParts>, Vec<Jewelries>) {
+    let weapons: Vec<WeaponKind> = parts.iter()
+        .filter_map(|g| if let Gear::Weapon(w) = g {Some(w.clone())} else {None})
+        .collect();
+    let armour: Vec<ArmourParts> = parts.iter()
+        .filter_map(|g| if let Gear::Armour(a) = g {Some(a.clone())} else {None})
+        .collect();
+    let jewelry: Vec<Jewelries> = parts.iter()
+        .filter_map(|g| if let Gear::Jewelry(j) = g {Some(j.clone())} else {None})
+        .collect();
+
+    (weapons, armour, jewelry)
+}
+
+async fn process_weapons_research(weapons: Vec<WeaponKind>, user: &User, ctx: &Context) -> Vec<SetPiece> {
+    let mut processed_weapons: Vec<SetPiece> = Vec::new();
+    for weapon in weapons {
+        let piece = SetPiece::Weapon(select_weapon_feats(&weapon, user, ctx, false, false).await);
+        show_piece(&piece, user, ctx).await;
+        processed_weapons.push(piece);
+    }
+
+    processed_weapons
+}
+
 async fn process_weapons(weapons: Vec<WeaponKind>, user: &User, ctx: &Context, with_enchantments: bool) -> Vec<SetPiece> {
     let mut processed_weapons: Vec<SetPiece> = Vec::new();
     for weapon in weapons {
@@ -119,16 +173,16 @@ async fn process_weapons(weapons: Vec<WeaponKind>, user: &User, ctx: &Context, w
             WeaponKind::OneHanded(_) => {
                 let question = format!("Has pedido una __**{}**__ de una mano. Quieres otra para ir con armas duales?", &weapon);
                 if confirm_dialog(&question, user, ctx).await {
-                    let piece = SetPiece::Weapon(select_weapon_feats(&weapon, user, ctx, with_enchantments).await);
+                    let piece = SetPiece::Weapon(select_weapon_feats(&weapon, user, ctx, with_enchantments, true).await);
                     show_piece(&piece, user, ctx).await;
                     processed_weapons.push(piece);
                 }
-                let piece = SetPiece::Weapon(select_weapon_feats(&weapon, user, ctx, with_enchantments).await);
+                let piece = SetPiece::Weapon(select_weapon_feats(&weapon, user, ctx, with_enchantments, true).await);
                 show_piece(&piece, user, ctx).await;
                 processed_weapons.push(piece);
             },
             WeaponKind::TwoHanded(_) => {
-                let piece = SetPiece::Weapon(select_weapon_feats(&weapon, user, ctx, with_enchantments).await);
+                let piece = SetPiece::Weapon(select_weapon_feats(&weapon, user, ctx, with_enchantments, true).await);
                 show_piece(&piece, user, ctx).await;
                 processed_weapons.push(piece);
             }
@@ -138,16 +192,32 @@ async fn process_weapons(weapons: Vec<WeaponKind>, user: &User, ctx: &Context, w
     processed_weapons
 }
 
-async fn select_weapon_feats(weapon: &WeaponKind, user: &User, ctx: &Context, with_enchantments: bool) -> Weapon {
+async fn select_weapon_feats(weapon: &WeaponKind, user: &User, ctx: &Context, with_enchantments: bool, with_quality: bool) -> Weapon {
     let selected_trait = select_weapon_trait(&weapon, user, ctx).await;
-    let quality = select_quality(&weapon, user, ctx).await;
 
     Weapon {
         kind: weapon.clone(),
         weapon_trait: selected_trait,
         enchantment: if with_enchantments {Some(select_weapon_enchantment(&weapon, user, ctx).await)} else {None},
-        quality,
+        quality: if with_quality {select_quality(&weapon, user, ctx).await} else {GearQuality::White},
     }
+}
+
+async fn process_jewelry_research(jewelries: Vec<Jewelries>, user: &User, ctx: &Context) -> Vec<SetPiece> {
+    let mut processed_jewelry: Vec<SetPiece> = Vec::new();
+
+    for jewelry in jewelries {
+        let piece = SetPiece::Jewelry(Jewelry {
+            kind: jewelry.clone(),
+            jewelry_trait: select_jewelry_trait(&jewelry, user, ctx).await,
+            enchantment: None,
+            quality: GearQuality::White
+        });
+        show_piece(&piece, user, ctx).await;
+        processed_jewelry.push(piece);
+    }
+
+    processed_jewelry
 }
 
 async fn process_jewelry(jewelries: Vec<Jewelries>, user: &User, ctx: &Context, with_enchantments: bool) -> Vec<SetPiece> {
@@ -213,6 +283,27 @@ async fn select_jewelry_feats(jewelry: &Jewelries, user: &User, ctx: &Context, w
         enchantment: if with_enchantments {Some(select_jewelry_enchantment(&jewelry, user, ctx).await)} else { None },
         quality,
     }
+}
+
+async fn process_armour_research(armour_parts: Vec<ArmourParts>, user: &User, ctx: &Context) -> Vec<SetPiece> {
+    let mut processed_armour: Vec<SetPiece> = Vec::new();
+
+    for armour in armour_parts {
+        let selected_trait = select_armour_trait(&armour, user, ctx).await;
+        let weight = select_weight(&armour, user, ctx).await;
+
+        let piece = SetPiece::Armour(Armour {
+            kind: armour.clone(),
+            armour_trait: selected_trait,
+            enchantment: None,
+            weight,
+            quality: GearQuality::White,
+        });
+        show_piece(&piece, user, ctx).await;
+        processed_armour.push(piece);
+    }
+
+    processed_armour
 }
 
 async fn process_armour(armour_parts: Vec<ArmourParts>, user: &User, ctx: &Context, with_enchantments: bool) -> Vec<SetPiece> {
