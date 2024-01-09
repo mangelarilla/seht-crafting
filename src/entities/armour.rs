@@ -3,7 +3,7 @@ use std::string::ToString;
 use crate::entities::{GearQuality, get_blacksmith_quality_cost, get_enchantment_quality_cost, get_tailoring_quality_cost, get_woodworking_quality_cost, MaterialCost};
 use crate::entities::materials::{ArmourTraitMaterials, EssenceRunes, PartMaterials, PotencyRunes};
 
-#[derive(Clone, EnumIter, Ord, PartialOrd, Eq, PartialEq, Display, EnumString)]
+#[derive(Clone, EnumIter, Ord, PartialOrd, Eq, PartialEq, Display, EnumString, EnumMessage)]
 pub enum ArmourParts {
     #[strum(serialize = "Cabeza")]
     Head,
@@ -23,7 +23,7 @@ pub enum ArmourParts {
     Shield
 }
 
-#[derive(Clone, EnumIter, Ord, PartialOrd, Eq, PartialEq, Display, EnumString)]
+#[derive(Clone, EnumIter, Ord, PartialOrd, Eq, PartialEq, Display, EnumString, EnumMessage)]
 pub enum ArmourWeights {
     #[strum(serialize = "Ligera")]
     Light,

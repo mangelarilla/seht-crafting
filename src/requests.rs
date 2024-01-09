@@ -2,18 +2,15 @@ pub mod gear;
 pub mod enchantment;
 pub mod consumable;
 
-use std::sync::Arc;
-use serenity::model::prelude::*;
-use serenity::model::prelude::message_component::MessageComponentInteraction;
+use serenity::all::{ComponentInteraction, CreateInteractionResponse, CreateInteractionResponseMessage, Message};
 use serenity::prelude::*;
 
-async fn ok_response(interaction: &Arc<MessageComponentInteraction>, ctx: &Context) {
-    interaction.create_interaction_response(&ctx.http, |response| response
-        .kind(InteractionResponseType::DeferredUpdateMessage))
+async fn ok_response(interaction: &ComponentInteraction, ctx: &Context) {
+    interaction.create_response(&ctx.http, CreateInteractionResponse::Defer(CreateInteractionResponseMessage::new()))
         .await.unwrap();
 }
 
-async fn await_component_interaction(msg: Message, ctx: &Context) -> Option<Arc<MessageComponentInteraction>> {
+async fn await_component_interaction(msg: Message, ctx: &Context) -> Option<ComponentInteraction> {
     match msg.await_component_interaction(ctx).timeout(std::time::Duration::from_secs(60 * 3)).await {
         Some(x) => Some(x),
         None => {

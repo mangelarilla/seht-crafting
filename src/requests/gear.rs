@@ -1,13 +1,8 @@
 use std::fmt::Display;
 use std::str::FromStr;
 use regex::Regex;
-use serenity::builder::CreateSelectMenu;
-use serenity::model::prelude::*;
-use serenity::model::prelude::component::ActionRowComponent::*;
-use serenity::model::prelude::component::ButtonStyle;
-use serenity::model::prelude::message_component::*;
-use serenity::model::prelude::modal::*;
-use serenity::prelude::*;
+use serenity::all::{ButtonStyle, ComponentInteraction, ComponentInteractionDataKind, Context, CreateActionRow, CreateButton, CreateInteractionResponse, CreateInteractionResponseMessage, CreateMessage, CreateModal, CreateSelectMenu, Mention, ModalInteraction, User};
+use serenity::all::ActionRowComponent::InputText;
 use tracing::info;
 use crate::components;
 use crate::components::SetPiece;
@@ -17,29 +12,19 @@ use crate::entities::jewelry::{Jewelries, Jewelry, JewelryEnchantments, JewelryT
 use crate::entities::weapon::{Weapon, WeaponEnchantments, WeaponKind, WeaponTraits};
 use crate::requests::{await_component_interaction, ok_response};
 
-pub async fn gear(interaction: MessageComponentInteraction, ctx: &Context) {
-    if let Err(why) = interaction
-        .create_interaction_response(&ctx.http, |r| r
-            .kind(InteractionResponseType::Modal)
-            .interaction_response_data(|d| d
-                .custom_id("gear_set_modal")
-                .title("⚒️ Solicitud de Equipamiento ⚒️")
-                .components(|c| c
-                    .create_action_row(|row| row
-                        .add_input_text(components::gear_set_modal("gear_set"))
-                    )
-                )
-            )
-        ).await
-    {
+pub async fn gear(interaction: ComponentInteraction, ctx: &Context) {
+    let response = CreateInteractionResponse::Modal(
+        CreateModal::new("gear_set_modal", "⚒️ Solicitud de Equipamiento ⚒️")
+            .components(vec![CreateActionRow::InputText(components::gear_set_modal("gear_set"))])
+    );
+    if let Err(why) = interaction.create_response(&ctx.http, response).await {
         info!("Cannot respond to gear request: {}", why)
     }
 }
 
-pub async fn gear_research(interaction: MessageComponentInteraction, ctx: &Context) {
-    if let Err(why) = interaction.create_interaction_response(&ctx.http, |response| response
-        .kind(InteractionResponseType::DeferredUpdateMessage)
-    ).await {
+pub async fn gear_research(interaction: ComponentInteraction, ctx: &Context) {
+    if let Err(why) = interaction
+        .create_response(&ctx.http, CreateInteractionResponse::Defer(CreateInteractionResponseMessage::new())).await {
         info!("Cannot respond to gear request: {}", why)
     } else {
         let parts = select_gear_research_options(&interaction.user, ctx).await;
@@ -49,29 +34,26 @@ pub async fn gear_research(interaction: MessageComponentInteraction, ctx: &Conte
             .get(0).unwrap().as_str();
         let material_cost = components::display_research_cost(&parts);
         if confirm_set("Investigar", &parts, &interaction.user, ctx).await {
-            interaction.channel_id.send_message(&ctx.http, |m| {
-                m.content(format!("{}\n\n__**‼️Peticion de Investigación para {}‼️**__\n\n", role,
-                                  Mention::User(interaction.user.id)));
-                let mut embeds = vec![components::gear_research_piece_embed(&parts)];
-                embeds.push(material_cost);
-                m.set_embeds(embeds);
-                m
-            }).await.unwrap();
+            interaction.channel_id.send_message(&ctx.http, CreateMessage::new()
+                .content(format!("{}\n\n__**‼️Peticion de Investigación para {}‼️**__\n\n", role, Mention::User(interaction.user.id)))
+                .add_embed(components::gear_research_piece_embed(&parts))
+                .add_embed(material_cost)
+            ).await.unwrap();
         }
     }
 }
 
-pub async fn gear_modal(interaction: ModalSubmitInteraction, ctx: &Context) {
-    if let Err(why) = interaction.create_interaction_response(&ctx.http, |response| response
-        .kind(InteractionResponseType::DeferredUpdateMessage)
-    ).await {
+pub async fn gear_modal(interaction: ModalInteraction, ctx: &Context) {
+    if let Err(why) = interaction
+        .create_response(&ctx.http, CreateInteractionResponse::Defer(CreateInteractionResponseMessage::new())).await {
         info!("Cannot respond to gear set modal: {}", why)
     } else {
         if let InputText(input) = interaction
             .data.components.get(0).unwrap()
             .components.get(0).unwrap()
         {
-            let parts = select_gear_set_options(&input.value, &interaction.user, ctx).await;
+            let input_value = input.value.clone().unwrap();
+            let parts = select_gear_set_options(&input_value, &interaction.user, ctx).await;
             let re = Regex::new(r"<@&\d+>").unwrap();
             let msg = &interaction.message.unwrap();
             let role = re.captures(&msg.content).unwrap()
@@ -80,33 +62,30 @@ pub async fn gear_modal(interaction: ModalSubmitInteraction, ctx: &Context) {
             let material_cost = if confirm_dialog("Este equipo es CP160?", &interaction.user, ctx).await {
                 Some(components::display_cost(&parts))
             } else { None };
-            if confirm_set(&input.value, &parts, &interaction.user, ctx).await {
-                interaction.channel_id.send_message(&ctx.http, |m| {
-                    m.content(format!("{}\n\n__**‼️Peticion de Equipamiento para {}‼️**__\n\n", role,
-                                      Mention::User(interaction.user.id)));
-                    let mut embeds = vec![components::gear_set_piece_embed(&input.value, &parts)];
-                    if let Some(materials) = material_cost {
-                        embeds.push(materials);
-                    }
-                    m.set_embeds(embeds);
-                    m
-                }).await.unwrap();
+            if confirm_set(&input_value, &parts, &interaction.user, ctx).await {
+                let mut embeds = vec![components::gear_set_piece_embed(&input_value, &parts)];
+                if let Some(materials) = material_cost {
+                    embeds.push(materials);
+                }
+                interaction.channel_id.send_message(&ctx.http, CreateMessage::new()
+                    .content(format!("{}\n\n__**‼️Peticion de Equipamiento para {}‼️**__\n\n", role, Mention::User(interaction.user.id)))
+                    .embeds(embeds)).await.unwrap();
             }
         }
     }
 }
 
 async fn confirm_set(name: &str, set: &Vec<SetPiece>, user: &User, ctx: &Context) -> bool {
-    let msg = user.dm(&ctx.http, |msg| msg
+    let msg = user.dm(&ctx.http, CreateMessage::new()
         .content("Esta es la configuración elegida, **esta todo bien?**")
-        .set_embed(components::gear_result_embed(set, name))
-        .components(|c| c.create_action_row(|r| r
-            .create_button(|b| b
-                .custom_id("confirm_set")
-                .label("Confirmar")
-                .style(ButtonStyle::Success)
-            )
-        ))
+        .embed(components::gear_result_embed(set, name))
+        .components(vec![
+            CreateActionRow::Buttons(vec![
+                CreateButton::new("confirm_set")
+                    .label("Confirmar")
+                    .style(ButtonStyle::Success)
+            ])
+        ])
     ).await.unwrap();
 
     let interaction = await_component_interaction(msg, ctx).await.unwrap();
@@ -377,22 +356,19 @@ async fn select_armour_feats(armour: &ArmourParts, user: &User, ctx: &Context, w
 }
 
 async fn select_parts(set: &str, user: &User, ctx: &Context) -> Vec<Gear> {
-    let msg = user.dm(&ctx.http, |msg| msg
-        .set_embed(components::gear_set_embed(set))
-        .components(|c| c
-            .create_action_row(|row| row
-                .add_select_menu(components::gear_set_parts("gear_set_parts"))
-            )
-        )
+    let msg = user.dm(&ctx.http, CreateMessage::new()
+        .embed(components::gear_set_embed(set))
+        .components(vec![CreateActionRow::SelectMenu(components::gear_set_parts("gear_set_parts"))])
     ).await.unwrap();
 
     let interaction = await_component_interaction(msg, ctx).await.unwrap();
     ok_response(&interaction, ctx).await;
 
-    interaction.data.values
-        .iter()
-        .filter_map(|f| Gear::from_str(f).ok())
-        .collect()
+    if let ComponentInteractionDataKind::StringSelect {values} = interaction.data.kind {
+        values.iter()
+            .filter_map(|f| Gear::from_str(f).ok())
+            .collect()
+    } else { vec![] }
 }
 
 async fn select_weapon_enchantment(weapon: &WeaponKind, user: &User, ctx: &Context) -> WeaponEnchantments {
@@ -447,49 +423,46 @@ async fn select_quality<F>(part: F, user: &User, ctx: &Context) -> GearQuality
 }
 
 async fn select_weight(part: &ArmourParts, user: &User, ctx: &Context) -> ArmourWeights {
-    let msg = user.dm(&ctx.http, |msg| msg
+    let msg = user.dm(&ctx.http, CreateMessage::new()
         .content(format!("Selecciona **peso** de la pieza: __**{}**__", part))
-        .components(|c| {
-            c.create_action_row(|row| row
-                .add_select_menu(components::armor_weight("weight"))
-            )
-        })
+        .components(vec![CreateActionRow::SelectMenu(components::armor_weight("weight"))])
     ).await.unwrap();
 
     let weight_interaction = await_component_interaction(msg, ctx).await.unwrap();
     ok_response(&weight_interaction, ctx).await;
 
-    ArmourWeights::from_str(&weight_interaction.data.values.get(0).unwrap().to_string()).unwrap()
+    if let ComponentInteractionDataKind::StringSelect {values} = weight_interaction.data.kind {
+        ArmourWeights::from_str(&values.get(0).unwrap().to_string()).unwrap()
+    } else {
+        panic!("rework pending")
+    }
+
 }
 
-async fn select_feat<F>(user: &User, ctx: &Context, feat: &str, item: F, menu: CreateSelectMenu) -> String
-    where F: Display
-{
-    let msg = user.dm(&ctx.http, |msg| msg
+async fn select_feat<F: Display>(user: &User, ctx: &Context, feat: &str, item: F, menu: CreateSelectMenu) -> String {
+    let msg = user.dm(&ctx.http, CreateMessage::new()
         .content(format!("Selecciona **{}** para __**{}**__", feat, item))
-        .components(|c| c
-            .create_action_row(|row| row
-                .add_select_menu(menu)
-            )
-        )
+        .components(vec![CreateActionRow::SelectMenu(menu)])
     ).await.unwrap();
 
     let interaction = await_component_interaction(msg, ctx).await.unwrap();
     ok_response(&interaction, ctx).await;
 
-    interaction.data.values.get(0).unwrap().to_string()
+    if let ComponentInteractionDataKind::StringSelect {values} = interaction.data.kind {
+        values.get(0).unwrap().to_string()
+    } else { String::new() }
 }
 
 async fn show_piece(piece: &SetPiece, user: &User, ctx: &Context) {
-    user.dm(&ctx.http, |msg| msg
-        .set_embed(components::gear_piece_embed(piece))
+    user.dm(&ctx.http, CreateMessage::new()
+        .embed(components::gear_piece_embed(piece))
     ).await.unwrap();
 }
 
 async fn confirm_dialog(question: &str, user: &User, ctx: &Context) -> bool {
-    let msg = user.dm(&ctx.http, |msg| msg
+    let msg = user.dm(&ctx.http, CreateMessage::new()
         .content(question)
-        .components(|c| c.add_action_row(components::confirmation_row("confirm_yes")))
+        .components(vec![components::confirmation_row("confirm_yes")])
     ).await.unwrap();
 
     let interaction = await_component_interaction(msg, ctx).await.unwrap();

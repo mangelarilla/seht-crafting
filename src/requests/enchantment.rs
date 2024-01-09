@@ -1,35 +1,23 @@
 use regex::Regex;
-use serenity::model::prelude::*;
-use serenity::model::prelude::component::ActionRowComponent::*;
-use serenity::model::prelude::message_component::*;
-use serenity::model::prelude::modal::*;
-use serenity::prelude::*;
+use serenity::all::{ComponentInteraction, Context, CreateActionRow, CreateInteractionResponse, CreateInteractionResponseMessage, CreateMessage, CreateModal, Mention, ModalInteraction};
+use serenity::all::ActionRowComponent::InputText;
 use tracing::info;
 use crate::components;
 
-pub async fn enchantment(interaction: MessageComponentInteraction, ctx: &Context) {
-    if let Err(why) = interaction
-        .create_interaction_response(&ctx.http, |r| r
-            .kind(InteractionResponseType::Modal)
-            .interaction_response_data(|d| d
-                .custom_id("enchantment_modal")
-                .title("⚒️ Solicitud de Runas ⚒️")
-                .components(|c| c
-                    .create_action_row(|row| row
-                        .add_input_text(components::enchantments_modal("enchantments"))
-                    )
-                )
-            )
-        ).await
-    {
+pub async fn enchantment(interaction: ComponentInteraction, ctx: &Context) {
+    let response = CreateInteractionResponse::Modal(
+        CreateModal::new("enchantment_modal", "⚒️ Solicitud de Runas ⚒️")
+            .components(vec![CreateActionRow::InputText(components::enchantments_modal("enchantments"))])
+    );
+
+    if let Err(why) = interaction.create_response(&ctx.http, response).await {
         info!("Cannot respond to enchantments request: {}", why)
     }
 }
 
-pub async fn enchantment_modal(interaction: ModalSubmitInteraction, ctx: &Context) {
-    if let Err(why) = interaction.create_interaction_response(&ctx.http, |response| response
-        .kind(InteractionResponseType::DeferredUpdateMessage)
-    ).await {
+pub async fn enchantment_modal(interaction: ModalInteraction, ctx: &Context) {
+    if let Err(why) = interaction
+        .create_response(&ctx.http, CreateInteractionResponse::Defer(CreateInteractionResponseMessage::new())).await {
         info!("Cannot respond to enchantments modal: {}", why)
     } else {
         if let InputText(input) = interaction
@@ -40,8 +28,8 @@ pub async fn enchantment_modal(interaction: ModalSubmitInteraction, ctx: &Contex
             let msg = &interaction.message.unwrap();
             let role = re.captures(&msg.content).unwrap()
                 .get(0).unwrap().as_str();
-            interaction.channel_id.send_message(&ctx.http, |m|
-                m.content(format!("{}\n\n__**‼️Peticion de Encantamientos para {}‼️**__ \n {}", role, Mention::User(interaction.user.id), &input.value))
+            interaction.channel_id.send_message(&ctx.http, CreateMessage::new()
+                .content(format!("{}\n\n__**‼️Peticion de Encantamientos para {}‼️**__ \n {}", role, Mention::User(interaction.user.id), input.value.clone().unwrap()))
             ).await.unwrap();
         }
     }

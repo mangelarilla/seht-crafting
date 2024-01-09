@@ -3,13 +3,11 @@ mod components;
 mod entities;
 
 use anyhow::anyhow;
+use serenity::all::{CreateCommand, CreateCommandOption, CreateInteractionResponse, CreateInteractionResponseMessage};
 use serenity::async_trait;
 use serenity::model::gateway::Ready;
-use serenity::model::application::command::Command;
 use serenity::prelude::*;
 use serenity::model::prelude::*;
-use serenity::model::prelude::application_command::CommandDataOptionValue;
-use serenity::model::prelude::command::CommandOptionType;
 use shuttle_secrets::SecretStore;
 use tracing::{error, info};
 
@@ -20,21 +18,16 @@ impl EventHandler for Bot {
     async fn ready(&self, ctx: Context, ready: Ready) {
         info!("{} is connected!", ready.user.name);
 
-        let guild_command = Command::create_global_application_command(&ctx.http, |command| {
-            command
-                .name("menu")
-                .description("Menu de solicitudes de crafteo")
-                .create_option(|option| option
-                    .name("precio")
-                    .description("Precio por pieza de la solicitud")
-                    .kind(CommandOptionType::Number)
+        let guild_command = Command::create_global_command(&ctx.http, CreateCommand::new("menu")
+            .description("Menu de solicitudes de crafteo")
+            .add_option(
+                CreateCommandOption::new(
+                    CommandOptionType::Number, "precio", "Precio por pieza de la solicitud")
                     .required(true))
-                .create_option(|option| option
-                    .name("rol")
-                    .description("Rol de crafteadores")
-                    .kind(CommandOptionType::Role)
-                    .required(true))
-        }).await;
+            .add_option(
+                CreateCommandOption::new(CommandOptionType::Role, "rol", "Rol de crafteadores").required(true)
+            )
+        ).await;
 
         match guild_command {
             Ok(command) => info!("Registered global slash command: {}", command.name),
@@ -49,52 +42,32 @@ impl EventHandler for Bot {
             Interaction::Ping(ping) => {
                 info!("Received ping interaction: {:#?}", ping)
             }
-            Interaction::ApplicationCommand(command) => {
+            Interaction::Command(command) => {
                 info!("Received command interaction: {}", command.data.name);
 
-                if let Some(member) = &command.member {
-                    if !member.permissions.unwrap().administrator() {
-                        command.create_interaction_response(&ctx.http, |r| r
-                            .kind(InteractionResponseType::ChannelMessageWithSource)
-                            .interaction_response_data(|m| m
-                                .ephemeral(true)
-                                .content("Solo los administradoes pueden usar este comando")
-                            )
-                        ).await.unwrap();
-                    }
-                }
-
                 let menu_price = command.data.options.get(0)
-                    .expect("Expected price").resolved.as_ref()
                     .expect("Expected price");
 
-                let price = if let CommandDataOptionValue::Number(price) = menu_price {
+                let price = if let CommandDataOptionValue::Number(price) = menu_price.value {
                     price
-                } else { &0f64 };
+                } else { 0f64 };
 
                 let menu_role = command.data.options.get(1)
-                    .expect("Expected role").resolved.as_ref()
                     .expect("Expected role");
 
-                let role = if let CommandDataOptionValue::Role(role) = menu_role {
+                let role = if let CommandDataOptionValue::Role(role) = menu_role.value {
                     role
                 } else {unreachable!("Expected role")};
 
-                if let Err(why) = command.create_interaction_response(&ctx.http, |response| {
-                    response
-                        .kind(InteractionResponseType::ChannelMessageWithSource)
-                        .interaction_response_data(|m| m
-                            .allowed_mentions(|m| m.roles([role]))
-                            .content(components::menu_description(price, &role))
-                            .components(|c| c.add_action_row(components::menu_action_row()))
-                        )
-                })
-                    .await
-                {
+                if let Err(why) = command.create_response(&ctx.http, CreateInteractionResponse::Message(
+                    CreateInteractionResponseMessage::new()
+                        .content(components::menu_description(&price, role))
+                        .components(vec![components::menu_action_row()])
+                )).await {
                     info!("Cannot respond to slash command: {}", why);
                 }
             }
-            Interaction::MessageComponent(component) => {
+            Interaction::Component(component) => {
                 info!("Received message component interaction: {}", component.data.custom_id);
                 match component.data.custom_id.as_str() {
                     "Gear" => requests::gear::gear(component, &ctx).await,
@@ -107,7 +80,7 @@ impl EventHandler for Bot {
             Interaction::Autocomplete(autocomplete) => {
                 info!("Received autocomplete interaction: {:#?}", autocomplete)
             }
-            Interaction::ModalSubmit(modal) => {
+            Interaction::Modal(modal) => {
                 info!("Received modal submit interaction: {}", modal.data.custom_id);
                 match modal.data.custom_id.as_str() {
                     "gear_set_modal" => requests::gear::gear_modal(modal, &ctx).await,
@@ -116,6 +89,7 @@ impl EventHandler for Bot {
                     _ => unreachable!("interaction id not found")
                 }
             }
+            _ => {}
         }
     }
 }
